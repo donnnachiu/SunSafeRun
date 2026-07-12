@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, Marker, useMapEvents } from 'react-leaflet';
+import { useMemo, useEffect, useState } from 'react';
+import { MapContainer, TileLayer, Polyline, CircleMarker, Circle, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { destinationPoint, calculateRouteDistance } from '../utils/routeUtils';
 import { EXPOSURE_COLORS } from '../utils/sunCalculations';
 
-export const DEFAULT_CENTER = { lat: 40.785091, lng: -73.968285 }; // Central Park, NYC
+export const DEFAULT_CENTER = { lat: 22.3026, lng: 114.1602 }; 
 const DEFAULT_ZOOM = 15;
 
 function ClickCapture({ onMapClick }) {
@@ -13,6 +13,31 @@ function ClickCapture({ onMapClick }) {
       onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
     },
   });
+  return null;
+}
+
+/** Handles moving the map smoothly once the user's browser geolocation is detected */
+function LocationInitializer({ onLocationFound }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLoc = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          onLocationFound(userLoc);
+          map.flyTo([userLoc.lat, userLoc.lng], DEFAULT_ZOOM, { animate: true, duration: 1.5 });
+        },
+        (error) => {
+          console.log("Location permission denied or unavailable. Using default fallback.", error);
+        }
+      );
+    }
+  }, [map, onLocationFound]);
+
   return null;
 }
 
@@ -36,11 +61,8 @@ function sunDivIcon(altitudeDeg) {
   return L.divIcon({ html, className: 'sun-glyph-marker', iconSize: [28, 28], iconAnchor: [14, 14] });
 }
 
-/**
- * The map. Click to lay down route points; consecutive points become
- * exposure-colored segments once weather + sun data is available.
- */
 export default function MapView({ routePoints, segments, originSun, onMapClick }) {
+  const [currentCenter, setCurrentCenter] = useState(DEFAULT_CENTER);
   const start = routePoints[0];
 
   const totalDistance = useMemo(() => calculateRouteDistance(routePoints), [routePoints]);
@@ -50,7 +72,7 @@ export default function MapView({ routePoints, segments, originSun, onMapClick }
 
   return (
     <MapContainer
-      center={[DEFAULT_CENTER.lat, DEFAULT_CENTER.lng]}
+      center={[currentCenter.lat, currentCenter.lng]}
       zoom={DEFAULT_ZOOM}
       scrollWheelZoom
       zoomControl={false}
@@ -61,6 +83,9 @@ export default function MapView({ routePoints, segments, originSun, onMapClick }
         url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
       />
       <ClickCapture onMapClick={onMapClick} />
+      
+      {/* Listens for the user's location on mount and smoothly moves the view */}
+      <LocationInitializer onLocationFound={setCurrentCenter} />
 
       {/* Compass ring for orientation context around the route start */}
       {start && (
@@ -88,7 +113,7 @@ export default function MapView({ routePoints, segments, originSun, onMapClick }
         />
       ))}
 
-      {/* Unscored preview while a route is still being drawn (fewer than 2 points, or no weather yet) */}
+      {/* Unscored preview while a route is still being drawn */}
       {segments.length === 0 && routePoints.length > 0 && (
         <Polyline
           positions={routePoints.map((p) => [p.lat, p.lng])}
