@@ -4,12 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#10151A',
-        surface: '#171F26',
-        surface2: '#1E2830',
-        line: '#2A3640',
-        paper: '#EDEFE9',
-        muted: '#8FA0AA',
+        ink: 'var(--c-ink)',
+        surface: 'var(--c-surface)',
+        surface2: 'var(--c-surface2)',
+        line: 'var(--c-line)',
+        paper: 'var(--c-paper)',
+        muted: 'var(--c-muted)',
         amber: {
           DEFAULT: '#F2A93B',
           deep: '#D9822B',
