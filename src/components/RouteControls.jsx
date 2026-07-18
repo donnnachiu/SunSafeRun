@@ -6,8 +6,8 @@ export default function RouteControls({ pointCount, onUndo, onClear }) {
       <div className="flex items-center gap-2 text-xs text-muted">
         <MapPin size={14} className="text-amber" />
         {pointCount === 0
-          ? 'Click the map to drop your first point'
-          : `${pointCount} point${pointCount === 1 ? '' : 's'} placed — keep clicking to extend the route`}
+          ? 'Search above or click the map to drop your first point'
+          : `${pointCount} point${pointCount === 1 ? '' : 's'} placed — search, or keep clicking, to extend the route`}
       </div>
       <div className="flex items-center gap-2">
         <button
