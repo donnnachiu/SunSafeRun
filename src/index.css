@@ -6,32 +6,68 @@ html, body, #root {
   height: 100%;
 }
 
+/* ---------- Theme variables ---------- */
+/* Night matches the app's original dark palette. Day is a light equivalent.
+   Every component reads bg-ink / text-paper / bg-surface / etc — never a
+   raw hex — so flipping the wrapper class repaints the whole app. */
+:root,
+.theme-night {
+  --c-ink: #10151a;
+  --c-surface: #171f26;
+  --c-surface2: #1e2830;
+  --c-line: #2a3640;
+  --c-paper: #edefe9;
+  --c-muted: #8fa0aa;
+  --c-attribution-bg: rgba(16, 21, 26, 0.75);
+}
+
+.theme-day {
+  --c-ink: #f7f8fa;
+  --c-surface: #ffffff;
+  --c-surface2: #eef1f5;
+  --c-line: #dbe0e6;
+  --c-paper: #12161c;
+  --c-muted: #5b6472;
+  --c-attribution-bg: rgba(255, 255, 255, 0.82);
+}
+
 body {
   @apply bg-ink text-paper font-body antialiased;
 }
 
-/* ---------- Leaflet overrides so the map matches the app's dark theme ---------- */
+/* Smooth crossfade when the theme toggle is flipped */
+body,
+.leaflet-container,
+.leaflet-control-zoom a,
+.leaflet-control-attribution,
+[class*='bg-'],
+[class*='text-'],
+[class*='border-'] {
+  transition: background-color 350ms ease, color 350ms ease, border-color 350ms ease;
+}
+
+/* ---------- Leaflet overrides, theme-aware via the same CSS variables ---------- */
 .leaflet-container {
-  background: #10151a;
+  background: var(--c-ink);
   font-family: 'Inter', sans-serif;
 }
 
 .leaflet-control-attribution {
-  background: rgba(16, 21, 26, 0.75) !important;
-  color: #8fa0aa !important;
+  background: var(--c-attribution-bg) !important;
+  color: var(--c-muted) !important;
   font-size: 10px !important;
 }
 .leaflet-control-attribution a {
-  color: #b9c4cb !important;
+  color: var(--c-paper) !important;
 }
 
 .leaflet-control-zoom a {
-  background: #1e2830 !important;
-  color: #edefe9 !important;
-  border-color: #2a3640 !important;
+  background: var(--c-surface2) !important;
+  color: var(--c-paper) !important;
+  border-color: var(--c-line) !important;
 }
 .leaflet-control-zoom a:hover {
-  background: #2a3640 !important;
+  background: var(--c-line) !important;
 }
 
 .sun-glyph-marker {
@@ -50,7 +86,7 @@ body {
   background: transparent;
 }
 .thin-scroll::-webkit-scrollbar-thumb {
-  background: #2a3640;
+  background: var(--c-line);
   border-radius: 999px;
 }
 
@@ -84,9 +120,9 @@ body {
   margin-top: 11px;
   border-radius: 999px;
   background: #f2a93b;
-  border: 3px solid #10151a;
+  border: 3px solid var(--c-ink);
   box-shadow: 0 0 0 1px rgba(242, 169, 59, 0.5), 0 0 16px rgba(242, 169, 59, 0.6);
-  transition: transform 120ms ease;
+  transition: transform 120ms ease, border-color 350ms ease;
 }
 .sun-arc-slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
@@ -96,7 +132,7 @@ body {
   height: 22px;
   border-radius: 999px;
   background: #f2a93b;
-  border: 3px solid #10151a;
+  border: 3px solid var(--c-ink);
   box-shadow: 0 0 0 1px rgba(242, 169, 59, 0.5), 0 0 16px rgba(242, 169, 59, 0.6);
 }
 
