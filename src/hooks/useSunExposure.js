@@ -18,7 +18,7 @@ function dateForHour(fractionalHour) {
  */
 export function useSunExposure(routePoints, hour) {
   const [weather, setWeather] = useState(null);
-  const [weatherStatus, setWeatherStatus] = useState('idle'); // idle | loading | ready | error
+  const [weatherStatus, setWeatherStatus] = useState('idle');
   const [weatherError, setWeatherError] = useState(null);
   const lastFetchedKey = useRef(null);
 
@@ -100,6 +100,7 @@ export function useSunExposure(routePoints, hour) {
     totalDistance,
     summary,
     reading,
+    hourly: weather?.hours ?? [],
     weatherStatus,
     weatherError,
   };
