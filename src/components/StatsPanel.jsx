@@ -1,6 +1,10 @@
-import { Gauge, CloudSun, Compass, ArrowUpRight, TriangleAlert, Loader2 } from 'lucide-react';
+import { Gauge, CloudSun, ArrowUpRight, Compass, TriangleAlert, Loader2, CloudRain } from 'lucide-react';
 import { EXPOSURE_LABELS } from '../utils/sunCalculations';
+import { classifyRain, RAIN_LABELS, RAIN_COLORS } from '../utils/rainModel';
 import { formatDistance } from '../utils/routeUtils';
+import InfoTooltip from './InfoTooltip';
+import SunscreenPanel from './SunscreenPanel';
+import RainChart from './RainChart';
 
 function uvLabel(uv) {
   if (uv >= 11) return 'Extreme';
@@ -16,12 +20,52 @@ function uvColor(uv) {
   return 'text-exposure-low';
 }
 
-function StatTile({ icon: Icon, label, value, sub, accentClass }) {
+const DEFINITIONS = {
+  uv: (
+    <>
+      Strength of the sun&rsquo;s UV radiation this hour, from Open-Meteo&rsquo;s forecast.
+      0&ndash;2 low, 3&ndash;5 moderate, 6&ndash;7 high, 8&ndash;10 very high, 11+ extreme &mdash;
+      higher means skin burns faster.
+    </>
+  ),
+  cloud: (
+    <>
+      Share of the sky covered by cloud. Clouds only partially block UV &mdash; this app
+      assumes full overcast still lets through about 35% of it.
+    </>
+  ),
+  altitude: (
+    <>
+      How high the sun sits above the horizon, in degrees. 0&deg; or below means it
+      hasn&rsquo;t risen yet or has already set; 90&deg; would be directly overhead.
+    </>
+  ),
+  bearing: (
+    <>
+      The compass direction you&rsquo;d face to look straight at the sun. 0&deg; = North,
+      90&deg; = East, 180&deg; = South, 270&deg; = West.
+    </>
+  ),
+  rain: (
+    <>
+      Precipitation forecast across the day, from Open-Meteo &mdash; line height is
+      expected rainfall (mm/h), tinted blue where rain is possible or likely. The dot
+      marks your simulated run time.
+    </>
+  ),
+};
+
+function StatTile({ icon: Icon, label, value, sub, accentClass, info, infoAlign }) {
   return (
     <div className="rounded-xl bg-surface2 border border-line p-3.5">
-      <div className="flex items-center gap-2 text-muted text-xs font-mono uppercase tracking-wide mb-2">
+      <div className="flex items-center gap-1.5 text-muted text-xs font-mono uppercase tracking-wide mb-2">
         <Icon size={14} className={accentClass ?? ''} />
-        {label}
+        <span>{label}</span>
+        {info && (
+          <InfoTooltip label={label} align={infoAlign}>
+            {info}
+          </InfoTooltip>
+        )}
       </div>
       <p className="font-display text-2xl font-semibold text-paper leading-none">{value}</p>
       {sub && <p className="text-xs text-muted mt-1">{sub}</p>}
@@ -29,7 +73,39 @@ function StatTile({ icon: Icon, label, value, sub, accentClass }) {
   );
 }
 
-export default function StatsPanel({ reading, originSun, summary, totalDistance, weatherStatus, weatherError, hasRoute }) {
+/** Lower-priority, more compact stat row — used for the sun-geometry figures at the bottom. */
+function MiniStat({ icon: Icon, label, value, sub, info, infoAlign }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-lg bg-surface2/60 border border-line px-3 py-2">
+      <Icon size={13} className="text-muted shrink-0" />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] uppercase tracking-wide text-muted font-mono">{label}</span>
+          {info && (
+            <InfoTooltip label={label} align={infoAlign}>
+              {info}
+            </InfoTooltip>
+          )}
+        </div>
+        <p className="text-sm text-paper font-mono leading-tight">
+          {value} <span className="text-muted font-body">· {sub}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function StatsPanel({
+  reading,
+  originSun,
+  summary,
+  totalDistance,
+  weatherStatus,
+  weatherError,
+  hasRoute,
+  hour,
+  hourly,
+}) {
   if (!hasRoute) {
     return (
       <div className="rounded-2xl border border-line bg-surface p-5 shadow-panel text-sm text-muted leading-relaxed">
@@ -64,9 +140,13 @@ export default function StatsPanel({ reading, originSun, summary, totalDistance,
 
   const uv = reading?.uvIndex ?? 0;
   const cloud = reading?.cloudCoverPct ?? 0;
+  const rainProbabilityPct = reading?.rainProbabilityPct ?? 0;
+  const precipMm = reading?.precipMm ?? 0;
+  const rainLevel = classifyRain({ rainProbabilityPct, precipMm });
 
   return (
     <div className="space-y-4">
+      {/* 1. Current conditions — the two numbers that most directly drive "should I go now" */}
       <div className="grid grid-cols-2 gap-3">
         <StatTile
           icon={Gauge}
@@ -74,22 +154,46 @@ export default function StatsPanel({ reading, originSun, summary, totalDistance,
           value={uv.toFixed(1)}
           sub={uvLabel(uv)}
           accentClass={uvColor(uv)}
-        />
-        <StatTile icon={CloudSun} label="Cloud cover" value={`${Math.round(cloud)}%`} sub="Open-Meteo hourly" />
-        <StatTile
-          icon={ArrowUpRight}
-          label="Sun altitude"
-          value={`${originSun ? originSun.altitudeDeg.toFixed(0) : '–'}°`}
-          sub={originSun && originSun.altitudeDeg <= 0 ? 'Below horizon' : 'Above horizon'}
+          info={DEFINITIONS.uv}
         />
         <StatTile
-          icon={Compass}
-          label="Sun bearing"
-          value={`${originSun ? originSun.azimuthDeg.toFixed(0) : '–'}°`}
-          sub="From start point"
+          icon={CloudSun}
+          label="Cloud cover"
+          value={`${Math.round(cloud)}%`}
+          sub="Open-Meteo hourly"
+          info={DEFINITIONS.cloud}
+          infoAlign="right"
         />
       </div>
 
+      {/* 2. Actionable: what to do about the UV you just saw */}
+      <SunscreenPanel
+        hour={hour}
+        currentUV={uv}
+        hourly={hourly ?? []}
+        totalDistance={totalDistance}
+        hasRoute={hasRoute}
+      />
+
+      {/* 3. Rain risk, as a time-series so a single mm figure isn't the whole story */}
+      <div className="rounded-xl bg-surface2 border border-line p-3.5">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5 text-muted text-xs font-mono uppercase tracking-wide">
+            <CloudRain size={14} style={{ color: RAIN_COLORS[rainLevel] ?? undefined }} />
+            <span>Rain risk</span>
+            <InfoTooltip label="Rain risk">{DEFINITIONS.rain}</InfoTooltip>
+          </div>
+          <span
+            className="text-xs font-semibold"
+            style={{ color: RAIN_COLORS[rainLevel] ?? 'var(--c-paper)' }}
+          >
+            {RAIN_LABELS[rainLevel]}
+          </span>
+        </div>
+        <RainChart hourly={hourly ?? []} currentHour={hour} />
+      </div>
+
+      {/* 4. The route itself — the payoff of everything above */}
       {summary && (
         <div className="rounded-2xl border border-line bg-surface p-5 shadow-panel">
           <p className="font-display text-sm font-semibold text-paper mb-3">Route exposure breakdown</p>
@@ -134,6 +238,25 @@ export default function StatsPanel({ reading, originSun, summary, totalDistance,
           </p>
         </div>
       )}
+
+      {/* 5. Sun geometry — useful context, least decision-relevant on its own, so it sits at the bottom */}
+      <div className="grid grid-cols-2 gap-2">
+        <MiniStat
+          icon={ArrowUpRight}
+          label="Sun altitude"
+          value={`${originSun ? originSun.altitudeDeg.toFixed(0) : '–'}°`}
+          sub={originSun && originSun.altitudeDeg <= 0 ? 'below horizon' : 'above horizon'}
+          info={DEFINITIONS.altitude}
+        />
+        <MiniStat
+          icon={Compass}
+          label="Sun bearing"
+          value={`${originSun ? originSun.azimuthDeg.toFixed(0) : '–'}°`}
+          sub="from start"
+          info={DEFINITIONS.bearing}
+          infoAlign="right"
+        />
+      </div>
     </div>
   );
 }
