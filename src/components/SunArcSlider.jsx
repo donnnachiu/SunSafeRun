@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Sunrise, Sunset } from 'lucide-react';
+import { classifyRain, RAIN_COLORS } from '../utils/rainModel';
 
 const MIN_HOUR = 5;
 const MAX_HOUR = 20;
 const STEP = 0.25;
 
-// Sky color stops across the day, used to paint the slider track's gradient
-// and the ambient backdrop tint. Interpolated linearly between neighbors.
+// Sky color stops across the day, used to paint the slider track's gradient //
 const SKY_STOPS = [
   { h: 5, c: [19, 27, 46] }, // pre-dawn indigo
   { h: 6.5, c: [233, 121, 59] }, // sunrise orange
@@ -61,12 +61,22 @@ function dateToFractionalHour(date) {
   return date.getHours() + date.getMinutes() / 60;
 }
 
-export default function SunArcSlider({ hour, onChange, sunTimes }) {
+export default function SunArcSlider({ hour, onChange, sunTimes, hourly = [] }) {
   const sky = useMemo(() => trackGradient(), []);
   const thumbPct = hourToPercent(hour);
 
   const sunrisePct = sunTimes?.sunrise ? hourToPercent(dateToFractionalHour(sunTimes.sunrise)) : null;
   const sunsetPct = sunTimes?.sunset ? hourToPercent(dateToFractionalHour(sunTimes.sunset)) : null;
+
+  const rainTicks = useMemo(() => {
+    return hourly
+      .filter((h) => h.hour >= MIN_HOUR && h.hour <= MAX_HOUR)
+      .map((h) => ({
+        hour: h.hour,
+        level: classifyRain({ rainProbabilityPct: h.rainProbabilityPct, precipMm: h.precipMm }),
+      }))
+      .filter((t) => t.level !== 'clear');
+  }, [hourly]);
 
   return (
     <div
@@ -100,6 +110,20 @@ export default function SunArcSlider({ hour, onChange, sunTimes }) {
         >
           {/* darken the portion before "now" slightly less than after, purely decorative divider */}
         </div>
+
+        {/* Rain-risk ticks, just below the track/thumb */}
+        {rainTicks.map((t) => (
+          <div
+            key={t.hour}
+            className="pointer-events-none absolute top-[calc(50%+16px)] w-1 h-1 rounded-full"
+            style={{
+              left: `${hourToPercent(t.hour)}%`,
+              backgroundColor: RAIN_COLORS[t.level],
+              opacity: t.level === 'likely' ? 1 : 0.6,
+            }}
+            title={`${t.level === 'likely' ? 'Rain likely' : 'Possible rain'} around ${formatHour(t.hour)}`}
+          />
+        ))}
 
         {/* Sunrise / sunset markers */}
         {sunrisePct !== null && (
