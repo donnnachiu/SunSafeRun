@@ -35,6 +35,15 @@ body {
   @apply bg-ink text-paper font-body antialiased;
 }
 
+/* Mobile browsers resize the viewport as address/toolbar chrome shows or
+   hides; 100dvh accounts for that. 100vh is listed first as a fallback for
+   browsers that don't support dvh — an invalid value is ignored, so the
+   vh line still applies there. */
+.app-height {
+  height: 100vh;
+  height: 100dvh;
+}
+
 /* Smooth crossfade when the theme toggle is flipped */
 body,
 .leaflet-container,
