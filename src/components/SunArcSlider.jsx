@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { Sunrise, Sunset } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Sunrise, Sunset, Clock } from 'lucide-react';
 import { classifyRain, RAIN_COLORS } from '../utils/rainModel';
 
 const MIN_HOUR = 5;
@@ -65,6 +65,16 @@ export default function SunArcSlider({ hour, onChange, sunTimes, hourly = [] }) 
   const sky = useMemo(() => trackGradient(), []);
   const thumbPct = hourToPercent(hour);
 
+  const [nowHour, setNowHour] = useState(() => dateToFractionalHour(new Date()));
+  useEffect(() => {
+    const id = setInterval(() => setNowHour(dateToFractionalHour(new Date())), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  const nowInRange = nowHour >= MIN_HOUR && nowHour <= MAX_HOUR;
+  const nowPct = nowInRange ? hourToPercent(nowHour) : null;
+  const isAtNow = Math.abs(hour - nowHour) < STEP / 2;
+
+
   const sunrisePct = sunTimes?.sunrise ? hourToPercent(dateToFractionalHour(sunTimes.sunrise)) : null;
   const sunsetPct = sunTimes?.sunset ? hourToPercent(dateToFractionalHour(sunTimes.sunset)) : null;
 
@@ -101,6 +111,18 @@ export default function SunArcSlider({ hour, onChange, sunTimes, hourly = [] }) 
           </div>
         )}
       </div>
+      {!isAtNow && nowInRange && (
+          <button
+              onClick={() => onChange(nowHour)}
+              className="mb-3 flex w-full items-center justify-between rounded-lg border border-amber/40 bg-amber/10 px-3 py-2 text-xs text-paper transition-colors hover:bg-amber/20"
+          >
+          <span className="flex items-center gap-1.5">
+            <Clock size={13} className="text-amber" />
+            Showing a simulated time, not right now ({formatHour(nowHour)})
+          </span>
+            <span className="font-semibold text-amber whitespace-nowrap">Jump to now →</span>
+          </button>
+      )}
 
       <div className="relative pt-1">
         {/* Sky-gradient track */}
@@ -139,6 +161,18 @@ export default function SunArcSlider({ hour, onChange, sunTimes, hourly = [] }) 
             style={{ left: `${sunsetPct}%` }}
             title={`Sunset ${formatHour(dateToFractionalHour(sunTimes.sunset))}`}
           />
+        )}
+        {/* Live "right now" marker — always visible so it's obvious when the
+            thumb (simulated time) has drifted away from the actual time */}
+        {nowPct !== null && (
+            <div
+                className="pointer-events-none absolute top-[calc(50%-13px)] flex flex-col items-center"
+                style={{ left: `${nowPct}%`, transform: 'translateX(-50%)' }}
+                title={`Right now: ${formatHour(nowHour)}`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-paper" />
+              <span className="mt-0.5 h-2.5 w-px bg-paper/60" />
+            </div>
         )}
 
         <input

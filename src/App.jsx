@@ -15,12 +15,21 @@ import { getSunTimes } from './utils/sunCalculations';
 import { classifyRain, RAIN_LABELS, RAIN_COLORS } from './utils/rainModel';
 
 const DEFAULT_HOUR = 7.5;
+const MIN_HOUR = 5;
+const MAX_HOUR = 20;
+
+function currentHourClamped() {
+  const now = new Date();
+  const fractional = now.getHours() + now.getMinutes() / 60;
+  if (fractional < MIN_HOUR || fractional > MAX_HOUR) return FALLBACK_HOUR;
+  return fractional;
+}
 
 export default function App() {
   const [routePoints, setRoutePoints] = useState([]);
-  const [hour, setHour] = useState(DEFAULT_HOUR);
+  const [hour, setHour] = useState(currentHourClamped);
   const [flyTarget, setFlyTarget] = useState(null);
-  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetSnap, setSheetSnap] = useState('collapsed');
   const { theme, isDaytime, toggleTheme } = useTheme();
 
   const { segments, originSun, totalDistance, summary, reading, hourly, weatherStatus, weatherError } =
@@ -150,7 +159,7 @@ export default function App() {
               </div>
             </div>
 
-            <BottomSheet peek={peekSummary} expanded={sheetExpanded} onExpandedChange={setSheetExpanded}>
+            <BottomSheet peek={peekSummary} snap={sheetSnap} onSnapChange={setSheetSnap}>
               <div className="space-y-4">{sidebarContent}</div>
             </BottomSheet>
           </div>
