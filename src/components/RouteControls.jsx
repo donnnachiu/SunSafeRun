@@ -20,12 +20,13 @@ export default function RouteControls({ pointCount, onUndo, onClear }) {
               <button
                   onClick={onUndo}
                   disabled={pointCount === 0}
+                  aria-label="Undo last point"
                   className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-paper bg-surface2 border border-line hover:bg-line disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                   <Undo2 size={13}/>
-                  <span className="hidden sm:inline">Undo</span>
-                  Undo
+                  <span>Undo</span>
               </button>
+
               <button
                   onClick={onClear}
                   disabled={pointCount === 0}
@@ -33,8 +34,7 @@ export default function RouteControls({ pointCount, onUndo, onClear }) {
                   className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-paper bg-surface2 border border-line hover:bg-exposure-high/20 hover:border-exposure-high/40 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                   <Trash2 size={13}/>
-                  Clear
-                  <span className="hidden sm:inline">Clear</span>
+                  <span>Clear</span>
               </button>
           </div>
       </div>

@@ -99,6 +99,19 @@ body,
   border-radius: 999px;
 }
 
+/* src/index.css */
+
+/* Desaturate map tiles so route colors stand out dramatically */
+.leaflet-tile-pane {
+  filter: grayscale(50%) contrast(100%) opacity(90%);
+}
+
+/* Ensure route polylines and markers stay at full vivid saturation */
+.leaflet-overlay-pane,
+.leaflet-marker-pane {
+  filter: none !important;
+}
+
 /* ---------- Sun Arc time slider (signature control) ---------- */
 .sun-arc-slider {
   -webkit-appearance: none;

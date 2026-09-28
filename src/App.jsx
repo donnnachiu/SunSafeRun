@@ -17,6 +17,7 @@ import { classifyRain, RAIN_LABELS, RAIN_COLORS } from './utils/rainModel';
 const DEFAULT_HOUR = 7.5;
 const MIN_HOUR = 5;
 const MAX_HOUR = 20;
+const FALLBACK_HOUR = 10; // Default to 10 AM
 
 function currentHourClamped() {
   const now = new Date();

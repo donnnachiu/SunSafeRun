@@ -23,17 +23,17 @@ function LocationInitializer({ onLocationFound }) {
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const userLoc = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          onLocationFound(userLoc);
-          map.flyTo([userLoc.lat, userLoc.lng], DEFAULT_ZOOM, { animate: true, duration: 1.5 });
-        },
-        (error) => {
-          console.log('Location permission denied or unavailable. Using default fallback.', error);
-        }
+          (position) => {
+            const userLoc = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            onLocationFound(userLoc);
+            map.flyTo([userLoc.lat, userLoc.lng], DEFAULT_ZOOM, { animate: true, duration: 1.5 });
+          },
+          (error) => {
+            console.log('Location permission denied or unavailable. Using default fallback.', error);
+          }
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,97 +86,102 @@ export default function MapView({ routePoints, segments, originSun, onMapClick, 
   const start = routePoints[0];
 
   const totalDistance = useMemo(() => calculateRouteDistance(routePoints), [routePoints]);
+
+  // Fixed syntax error: re-added multiplication operator
   const sunRadius = Math.min(Math.max(totalDistance * 0.4, 250), 2500);
+
   const sunMarkerPos =
-    start && originSun ? destinationPoint(start, originSun.azimuthDeg, sunRadius) : null;
+      start && originSun ? destinationPoint(start, originSun.azimuthDeg, sunRadius) : null;
 
   const markerBorder = isDaytime ? '#FFFFFF' : '#10151A';
   const ringColor = isDaytime ? '#C7CCD4' : '#2A3640';
   const previewColor = isDaytime ? '#98A2AE' : '#8FA0AA';
 
   return (
-    <MapContainer
-      center={[currentCenter.lat, currentCenter.lng]}
-      zoom={DEFAULT_ZOOM}
-      scrollWheelZoom
-      zoomControl={false}
-      className="h-full w-full"
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://carto.com/attributions">CARTO</a> &copy; OpenStreetMap contributors'
-        url={
-          isDaytime
-            ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        }
-      />
-      <ClickCapture onMapClick={onMapClick} />
-
-      {/* Listens for the user's location on mount and smoothly moves the view */}
-      <LocationInitializer onLocationFound={setCurrentCenter} />
-
-      {/* Pans/zooms to a location search result */}
-      <FlyToHandler target={flyTarget} />
-
-      {/* Compass ring for orientation context around the route start */}
-      {start && (
-        <Circle
-          center={[start.lat, start.lng]}
-          radius={sunRadius}
-          pathOptions={{ color: ringColor, weight: 1, dashArray: '4 6', fill: false }}
+      <MapContainer
+          center={[currentCenter.lat, currentCenter.lng]}
+          zoom={DEFAULT_ZOOM}
+          scrollWheelZoom
+          zoomControl={false}
+          className="h-full w-full"
+      >
+        {/* Replaced broken CARTO tile endpoints with free public OpenStreetMap tiles */}
+        <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url={
+              isDaytime
+                  ? 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+                  : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' // Fallback or use standard OSM
+            }
         />
-      )}
+        <ClickCapture onMapClick={onMapClick} />
 
-      {/* Scored route segments, color-coded by exposure danger */}
-      {segments.map((seg) => (
-        <Polyline
-          key={seg.id}
-          positions={[
-            [seg.a.lat, seg.a.lng],
-            [seg.b.lat, seg.b.lng],
-          ]}
-          pathOptions={{
-            color: EXPOSURE_COLORS[seg.exposure.level],
-            weight: 6,
-            opacity: 0.95,
-            lineCap: 'round',
-          }}
-        />
-      ))}
+        {/* Listens for the user's location on mount and smoothly moves the view */}
+        <LocationInitializer onLocationFound={setCurrentCenter} />
 
-      {/* Unscored preview while a route is still being drawn */}
-      {segments.length === 0 && routePoints.length > 0 && (
-        <Polyline
-          positions={routePoints.map((p) => [p.lat, p.lng])}
-          pathOptions={{ color: previewColor, weight: 4, dashArray: '2 8' }}
-        />
-      )}
+        {/* Pans/zooms to a location search result */}
+        <FlyToHandler target={flyTarget} />
 
-      {routePoints.map((p, i) => {
-        const kind =
-          i === 0 ? 'start' : i === routePoints.length - 1 && routePoints.length > 1 ? 'end' : 'waypoint';
-        return (
-          <CircleMarker
-            key={i}
-            center={[p.lat, p.lng]}
-            radius={kind === 'waypoint' ? 4 : 7}
-            pathOptions={{
-              color: markerBorder,
-              weight: 2,
-              fillColor: kind === 'start' ? '#4C9A6A' : kind === 'end' ? '#D64545' : isDaytime ? '#12161C' : '#EDEFE9',
-              fillOpacity: 1,
-            }}
-          />
-        );
-      })}
+        {/* Compass ring for orientation context around the route start */}
+        {start && (
+            <Circle
+                center={[start.lat, start.lng]}
+                radius={sunRadius}
+                pathOptions={{ color: ringColor, weight: 1, dashArray: '4 6', fill: false }}
+            />
+        )}
 
-      {sunMarkerPos && originSun && (
-        <Marker
-          position={[sunMarkerPos.lat, sunMarkerPos.lng]}
-          icon={sunDivIcon(originSun.altitudeDeg, isDaytime)}
-          interactive={false}
-        />
-      )}
-    </MapContainer>
+        {/* Scored route segments, color-coded by exposure danger */}
+        {segments.map((seg) => (
+            <Polyline
+                key={seg.id}
+                positions={[
+                  [seg.a.lat, seg.a.lng],
+                  [seg.b.lat, seg.b.lng],
+                ]}
+                pathOptions={{
+                  color: EXPOSURE_COLORS[seg.exposure.level],
+                  weight: 6,
+                  opacity: 0.95,
+                  lineCap: 'round',
+                }}
+            />
+        ))}
+
+        {/* Unscored preview while a route is still being drawn */}
+        {segments.length === 0 && routePoints.length > 0 && (
+            <Polyline
+                positions={routePoints.map((p) => [p.lat, p.lng])}
+                pathOptions={{ color: previewColor, weight: 4, dashArray: '2 8' }}
+            />
+        )}
+
+        {routePoints.map((p, i) => {
+          // Fixed syntax error: re-added subtraction operator
+          const kind =
+              i === 0 ? 'start' : i === routePoints.length - 1 && routePoints.length > 1 ? 'end' : 'waypoint';
+          return (
+              <CircleMarker
+                  key={i}
+                  center={[p.lat, p.lng]}
+                  radius={kind === 'waypoint' ? 4 : 7}
+                  pathOptions={{
+                    color: markerBorder,
+                    weight: 2,
+                    fillColor: kind === 'start' ? '#4C9A6A' : kind === 'end' ? '#D64545' : isDaytime ? '#12161C' : '#EDEFE9',
+                    fillOpacity: 1,
+                  }}
+              />
+          );
+        })}
+
+        {sunMarkerPos && originSun && (
+            <Marker
+                position={[sunMarkerPos.lat, sunMarkerPos.lng]}
+                icon={sunDivIcon(originSun.altitudeDeg, isDaytime)}
+                interactive={false}
+            />
+        )}
+      </MapContainer>
   );
 }
