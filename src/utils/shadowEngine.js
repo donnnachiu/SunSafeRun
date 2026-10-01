@@ -11,6 +11,17 @@ const OVERPASS_ENDPOINTS = [
 const footprintCache = new Map();
 
 /**
+ * Converts fractional hours (e.g. 14.75 -> 2:45 PM) into a JS Date object.
+ */
+export function getSimulatedDate(fractionalHour, baseDate = new Date()) {
+    const d = new Date(baseDate);
+    const hours = Math.floor(fractionalHour);
+    const minutes = Math.round((fractionalHour - hours) * 60);
+    d.setHours(hours, minutes, 0, 0);
+    return d;
+}
+
+/**
  * Fetches building footprints within map bounds, handling CORS, fallbacks, and signal cancellation.
  */
 export async function fetchBuildingFootprints(bounds, signal) {
@@ -98,9 +109,15 @@ function parseOverpassBuildings(data) {
 
 /**
  * Computes 2D ground shadow polygon projected from building footprint relative to sun angle.
+ * Accept either a Date object OR a fractional hour (e.g., 14.75).
  */
-export function calculateBuildingShadow(building, centerLat, centerLng, date = new Date()) {
-    const sunPos = SunCalc.getPosition(date, centerLat, centerLng);
+export function calculateBuildingShadow(building, centerLat, centerLng, timeOrDate = new Date()) {
+    // Automatically convert fractional hour number to Date if needed
+    const targetDate = typeof timeOrDate === 'number'
+        ? getSimulatedDate(timeOrDate)
+        : timeOrDate;
+
+    const sunPos = SunCalc.getPosition(targetDate, centerLat, centerLng);
     const altitude = sunPos.altitude; // in radians
     const azimuth = sunPos.azimuth;   // in radians (0 = South)
 
