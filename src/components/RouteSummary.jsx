@@ -3,6 +3,8 @@ import { ExposureFeedback } from './ExposureFeedback';
 
 export default function RouteSummary({
                                          totalDistance,
+                                         reading,
+                                         summary,
                                          isConnectedToGarmin = false,
                                          routeId = 'route-1',
                                          routeName = 'SunSafeRun Route',
@@ -40,13 +42,22 @@ export default function RouteSummary({
         // Convert km to meters if totalDistance is passed in km
         const distanceMeters = totalDistance < 100 ? totalDistance * 1000 : totalDistance;
 
+        // Extract exposure & UV metrics
+        const lowMeters = summary?.low ?? 0;
+        const totalMeters = summary?.totalMeters || distanceMeters;
+        const shadePct = totalMeters > 0 ? (lowMeters / totalMeters) * 100 : 0;
+        const uvIndex = reading?.uvIndex ?? 0;
+
         try {
-            const response = await fetch('/api/intervals/push-workout', {
+            const response = await fetch('/api/garmin/push-workout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     workoutName: routeName,
                     distanceMeters,
+                    shadePct,
+                    lowExposureMeters: lowMeters,
+                    uvIndex,
                     scheduledDate: new Date().toISOString().split('T')[0], // YYYY-MM-DD
                 }),
             });
@@ -83,14 +94,14 @@ export default function RouteSummary({
                             <li>
                                 Create or log in to{' '}
                                 <a
-                                    href="https://intervals.icu"
+                                    href="https://intervals.icu/settings"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="font-medium underline hover:text-amber-950"
                                 >
-                                    Intervals.icu
+                                    Intervals.icu Settings
                                 </a>{' '}
-                                and turn on <em>Upload planned workouts</em> under Garmin Settings.
+                                and ensure Garmin Connect is linked with <em>Upload planned workouts</em> turned ON.
                             </li>
                             <li>Sign in below to authorize SunSafeRun.</li>
                         </ol>
@@ -107,7 +118,7 @@ export default function RouteSummary({
                     </button>
                 </div>
             ) : (
-                /* Connected State: Immediate 1-click sync */
+                /* Connected State: 1-click sync */
                 <button
                     onClick={handleSyncToGarmin}
                     disabled={syncing || !totalDistance || totalDistance <= 0}
@@ -120,15 +131,29 @@ export default function RouteSummary({
                 </button>
             )}
 
+            {/* Sync Notifications */}
             {syncStatus === 'success' && (
-                <p className="mt-2 text-xs text-green-600 font-medium text-center">
+                <div className="mt-3 p-2.5 bg-green-50 border border-green-200 rounded-md text-xs text-green-800 text-center">
                     ✓ Scheduled on Garmin! Select "Run" on watch to start.
-                </p>
+                </div>
             )}
             {syncStatus === 'error' && (
-                <p className="mt-2 text-xs text-red-500 font-medium text-center">
-                    Failed to sync. Make sure Garmin Connect is linked in Intervals.icu.
-                </p>
+                <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 space-y-1">
+                    <p className="font-semibold text-red-900 text-center">Failed to sync to Garmin.</p>
+                    <p className="text-[11px] text-red-700 text-center">
+                        Make sure Garmin Connect is linked in your Intervals.icu settings.
+                    </p>
+                    <div className="text-center pt-1">
+                        <a
+                            href="https://intervals.icu/settings"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block text-xs text-[#007CC3] underline font-medium hover:text-[#00639C]"
+                        >
+                            Open Intervals.icu Settings →
+                        </a>
+                    </div>
+                </div>
             )}
 
             {/* 5-Star Feedback Component */}
