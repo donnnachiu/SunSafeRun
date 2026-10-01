@@ -16,7 +16,7 @@ export function getSimulatedDate(fractionalHour, baseDate = new Date()) {
 }
 
 /**
- * Fetches building footprints from OpenStreetMap Overpass API using fallback mirrors and POST requests.
+ * Fetches building footprints from OpenStreetMap Overpass API using fallback mirrors.
  */
 export async function fetchBuildingFootprints(bounds, signal) {
     if (!bounds) return [];
@@ -59,10 +59,11 @@ export async function fetchBuildingFootprints(bounds, signal) {
 
     if (!data || !data.elements) return [];
 
+    // Store as [lng, lat] for standard Mapbox/Deck.gl/GeoJSON compatibility
     const nodes = {};
     data.elements.forEach((el) => {
         if (el.type === 'node') {
-            nodes[el.id] = [el.lat, el.lon];
+            nodes[el.id] = [el.lon, el.lat]; // FIXED: [lng, lat] order
         }
     });
 
@@ -81,7 +82,7 @@ export async function fetchBuildingFootprints(bounds, signal) {
                 buildings.push({
                     id: el.id,
                     height,
-                    coords,
+                    coords, // Array of [lng, lat]
                 });
             }
         }
@@ -92,6 +93,7 @@ export async function fetchBuildingFootprints(bounds, signal) {
 
 /**
  * Computes 2D ground shadow polygon projected from building footprint relative to sun angle.
+ * Output coordinates are in GeoJSON standard [longitude, latitude] format.
  */
 export function calculateBuildingShadow(
     building,
@@ -108,27 +110,33 @@ export function calculateBuildingShadow(
 
     const sunPos = SunCalc.getPosition(targetDate, lat, lng);
     const altitude = sunPos.altitude;
-    const azimuth = sunPos.azimuth;
+    const azimuth = sunPos.azimuth; // SunCalc azimuth: 0 = South, pi/2 = West
 
-    if (altitude <= 0) return null;
+    // If sun is at or below horizon, no shadow is cast
+    if (altitude <= 0.05) return null;
 
     const shadowLengthRatio = 1 / Math.tan(altitude);
     const latMetersRatio = 111000;
     const lngMetersRatio = 111000 * Math.cos((lat * Math.PI) / 180);
 
-    const shadowLengthMeters = building.height * shadowLengthRatio;
+    // Limit maximum shadow length at low sun angles to prevent infinite polygons
+    const shadowLengthMeters = Math.min(building.height * shadowLengthRatio, 250);
 
+    // SunCalc azimuth = 0 is South (+lat displacement for shadow)
+    // SunCalc azimuth = -pi/2 is East (-lng displacement for shadow)
     const shadowDy = (shadowLengthMeters * Math.cos(azimuth)) / latMetersRatio;
     const shadowDx = (shadowLengthMeters * Math.sin(azimuth)) / lngMetersRatio;
 
     const shadowPolygon = [];
 
-    building.coords.forEach(([bLat, bLng]) => {
-        shadowPolygon.push([bLat, bLng]);
+    // Base building footprint [lng, lat]
+    building.coords.forEach(([bLng, bLat]) => {
+        shadowPolygon.push([bLng, bLat]);
     });
 
-    building.coords.slice().reverse().forEach(([bLat, bLng]) => {
-        shadowPolygon.push([bLat + shadowDy, bLng + shadowDx]);
+    // Projected shadow roof footprint [lng + dx, lat + dy]
+    building.coords.slice().reverse().forEach(([bLng, bLat]) => {
+        shadowPolygon.push([bLng + shadowDx, bLat + shadowDy]);
     });
 
     return shadowPolygon;
