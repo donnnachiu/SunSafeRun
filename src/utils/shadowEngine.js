@@ -1,4 +1,78 @@
-// src/utils/shadowEngine.js
+import SunCalc from 'suncalc';
+
+/**
+ * Converts a fractional hour (e.g. 14.75 -> 2:45 PM) or base Date into a Date object.
+ */
+export function getSimulatedDate(fractionalHour, baseDate = new Date()) {
+    if (fractionalHour instanceof Date) return fractionalHour;
+
+    const d = new Date(baseDate);
+    if (typeof fractionalHour === 'number' && !isNaN(fractionalHour)) {
+        const hours = Math.floor(fractionalHour);
+        const minutes = Math.round((fractionalHour - hours) * 60);
+        d.setHours(hours, minutes, 0, 0);
+    }
+    return d;
+}
+
+/**
+ * Fetches building footprints and estimated heights from OpenStreetMap Overpass API
+ * within the given Leaflet map bounds.
+ */
+export async function fetchBuildingFootprints(bounds, signal) {
+    if (!bounds) return [];
+
+    const south = typeof bounds.getSouth === 'function' ? bounds.getSouth() : bounds.south;
+    const west = typeof bounds.getWest === 'function' ? bounds.getWest() : bounds.west;
+    const north = typeof bounds.getNorth === 'function' ? bounds.getNorth() : bounds.north;
+    const east = typeof bounds.getEast === 'function' ? bounds.getEast() : bounds.east;
+
+    const query = `
+    [out:json][timeout:15];
+    (
+      way["building"](${south},${west},${north},${east});
+      relation["building"](${south},${west},${north},${east});
+    );
+    out body;
+    >;
+    out skel qt;
+  `;
+
+    const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`, { signal });
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    const nodes = {};
+
+    data.elements.forEach((el) => {
+        if (el.type === 'node') {
+            nodes[el.id] = [el.lat, el.lon];
+        }
+    });
+
+    const buildings = [];
+    data.elements.forEach((el) => {
+        if (el.type === 'way' && el.tags && el.tags.building) {
+            const coords = (el.nodes || []).map((id) => nodes[id]).filter(Boolean);
+            if (coords.length >= 3) {
+                let height = 12; // Fallback ~4 floors (12m)
+                if (el.tags.height) {
+                    height = parseFloat(el.tags.height) || 12;
+                } else if (el.tags['building:levels']) {
+                    height = (parseFloat(el.tags['building:levels']) || 3) * 3.5;
+                }
+
+                buildings.push({
+                    id: el.id,
+                    height,
+                    coords,
+                });
+            }
+        }
+    });
+
+    return buildings;
+}
 
 /**
  * Computes 2D ground shadow polygon projected from building footprint relative to sun angle.
@@ -14,7 +88,7 @@ export function calculateBuildingShadow(
     const lat = (typeof centerLat === 'number' && !isNaN(centerLat)) ? centerLat : 22.3027;
     const lng = (typeof centerLng === 'number' && !isNaN(centerLng)) ? centerLng : 114.1609;
 
-    // 2. Convert fractional hour to JS Date if needed
+    // 2. Convert fractional hour or Date to JS Date
     const targetDate = typeof timeOrDate === 'number'
         ? getSimulatedDate(timeOrDate)
         : (timeOrDate || new Date());
@@ -28,7 +102,7 @@ export function calculateBuildingShadow(
 
     const shadowLengthRatio = 1 / Math.tan(altitude);
 
-    // Correct offset conversions (1 deg lat ~= 111,000m, 1 deg lng ~= 111,000m * cos(lat))
+    // Coordinate offset conversions (1 deg lat ~= 111,000m, 1 deg lng ~= 111,000m * cos(lat))
     const latMetersRatio = 111000;
     const lngMetersRatio = 111000 * Math.cos((lat * Math.PI) / 180);
 
