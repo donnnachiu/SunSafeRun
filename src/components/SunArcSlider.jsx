@@ -118,9 +118,9 @@ export default function SunArcSlider({ hour, onChange, sunTimes, hourly = [] }) 
           >
           <span className="flex items-center gap-1.5">
             <Clock size={13} className="text-amber" />
-            Showing a simulated time, not right now ({formatHour(nowHour)})
+            Simulated time ({formatHour(nowHour)})
           </span>
-            <span className="font-semibold text-amber whitespace-nowrap">Jump to now →</span>
+            <span className="font-semibold text-amber whitespace-nowrap">Now →</span>
           </button>
       )}
 

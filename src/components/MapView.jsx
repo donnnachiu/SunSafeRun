@@ -18,6 +18,19 @@ import { fetchBuildingFootprints, calculateBuildingShadow } from '../utils/shado
 export const DEFAULT_CENTER = { lat: 22.3026, lng: 114.1602 };
 const DEFAULT_ZOOM = 15;
 
+/** Ensures shadows sit on a Leaflet pane BELOW route lines and markers */
+function ShadowPaneSetup() {
+  const map = useMap();
+  useEffect(() => {
+    if (!map.getPane('shadowPane')) {
+      const pane = map.createPane('shadowPane');
+      pane.style.zIndex = '350'; // Standard vectors/route lines render at zIndex 400
+      pane.style.pointerEvents = 'none';
+    }
+  }, [map]);
+  return null;
+}
+
 /** Captures click events on the map */
 function ClickCapture({ onMapClick }) {
   useMapEvents({
@@ -159,11 +172,12 @@ export default function MapView({
                                 }) {
   const [currentCenter, setCurrentCenter] = useState(DEFAULT_CENTER);
   const [buildings, setBuildings] = useState([]);
+  const [showShadows, setShowShadows] = useState(true); // Toggle building shadows (default: true)
 
   // Dynamic ground shadow calculation per building footprint
   const shadowPolygons = useMemo(() => {
-    if (!isDaytime || buildings.length === 0) return [];
-    const targetDate = selectedTime || new Date();
+    if (!showShadows || !isDaytime || buildings.length === 0) return [];
+    const targetDate = selectedTime !== undefined && selectedTime !== null ? selectedTime : new Date();
 
     return buildings
         .map((b) => {
@@ -172,7 +186,7 @@ export default function MapView({
           return calculateBuildingShadow(b, bLat, bLng, targetDate);
         })
         .filter(Boolean);
-  }, [buildings, isDaytime, selectedTime]);
+  }, [buildings, isDaytime, selectedTime, showShadows]);
 
   const start = routePoints[0];
   const totalDistance = useMemo(() => calculateRouteDistance(routePoints), [routePoints]);
@@ -186,105 +200,125 @@ export default function MapView({
   const previewColor = isDaytime ? '#98A2AE' : '#8FA0AA';
 
   return (
-      <MapContainer
-          center={[currentCenter.lat, currentCenter.lng]}
-          zoom={DEFAULT_ZOOM}
-          scrollWheelZoom
-          zoomControl={false}
-          className="h-full w-full"
-      >
-        <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <ClickCapture onMapClick={onMapClick} />
-        <LocationInitializer onLocationFound={setCurrentCenter} />
-        <MapCenterTracker onCenterChange={setCurrentCenter} />
-        <FlyToHandler target={flyTarget} />
-        <BuildingShadowLoader onBuildingsFetched={setBuildings} />
+      <div className="relative h-full w-full">
+        {/* Map Control: Building Shadow Toggle */}
+        <div className="absolute top-3 right-3 z-[500]">
+          <button
+              type="button"
+              onClick={() => setShowShadows((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md transition-all border shadow-sm ${
+                  showShadows
+                      ? 'bg-slate-900/80 text-amber-400 border-amber-500/30'
+                      : 'bg-slate-900/60 text-slate-400 border-slate-700/50 hover:text-slate-200'
+              }`}
+          >
+            <span className={`w-2 h-2 rounded-full ${showShadows ? 'bg-amber-400' : 'bg-slate-500'}`} />
+            Building Shadows {showShadows ? 'On' : 'Off'}
+          </button>
+        </div>
 
-        {/* Render 3D Building Shadow Overlay */}
-        {shadowPolygons.map((shadowCoords, idx) => (
-            <Polygon
-                key={`shadow-${idx}`}
-                positions={shadowCoords}
-                pathOptions={{
-                  stroke: false,
-                  fillColor: '#1e293b',
-                  fillOpacity: 0.45,
-                  interactive: false,
-                }}
-            />
-        ))}
+        <MapContainer
+            center={[currentCenter.lat, currentCenter.lng]}
+            zoom={DEFAULT_ZOOM}
+            scrollWheelZoom
+            zoomControl={false}
+            className="h-full w-full"
+        >
+          <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <ShadowPaneSetup />
+          <ClickCapture onMapClick={onMapClick} />
+          <LocationInitializer onLocationFound={setCurrentCenter} />
+          <MapCenterTracker onCenterChange={setCurrentCenter} />
+          <FlyToHandler target={flyTarget} />
+          <BuildingShadowLoader onBuildingsFetched={setBuildings} />
 
-        {/* Compass ring around route start */}
-        {start && (
-            <Circle
-                center={[start.lat, start.lng]}
-                radius={sunRadius}
-                pathOptions={{ color: ringColor, weight: 1, dashArray: '4 6', fill: false }}
-            />
-        )}
-
-        {/* Scored route segments */}
-        {segments.map((seg) => (
-            <Polyline
-                key={seg.id || `${seg.a.lat}-${seg.b.lat}`}
-                positions={[
-                  [seg.a.lat, seg.a.lng],
-                  [seg.b.lat, seg.b.lng],
-                ]}
-                pathOptions={{
-                  color: EXPOSURE_COLORS[seg.exposure?.level] || '#3B82F6',
-                  weight: 6,
-                  opacity: 0.95,
-                  lineCap: 'round',
-                }}
-            />
-        ))}
-
-        {/* Unscored preview while route is drawn */}
-        {segments.length === 0 && routePoints.length > 0 && (
-            <Polyline
-                positions={routePoints.map((p) => [p.lat, p.lng])}
-                pathOptions={{ color: previewColor, weight: 4, dashArray: '2 8' }}
-            />
-        )}
-
-        {/* Waypoint Markers */}
-        {routePoints.map((p, i) => {
-          const kind =
-              i === 0 ? 'start' : i === routePoints.length - 1 && routePoints.length > 1 ? 'end' : 'waypoint';
-          return (
-              <CircleMarker
-                  key={i}
-                  center={[p.lat, p.lng]}
-                  radius={kind === 'waypoint' ? 4 : 7}
+          {/* Render 3D Building Shadow Overlay on low zIndex shadowPane */}
+          {shadowPolygons.map((shadowCoords, idx) => (
+              <Polygon
+                  key={`shadow-${idx}`}
+                  positions={shadowCoords}
+                  pane="shadowPane"
                   pathOptions={{
-                    color: markerBorder,
-                    weight: 2,
-                    fillColor:
-                        kind === 'start'
-                            ? '#4C9A6A'
-                            : kind === 'end'
-                                ? '#D64545'
-                                : isDaytime
-                                    ? '#12161C'
-                                    : '#EDEFE9',
-                    fillOpacity: 1,
+                    stroke: false,
+                    fillColor: '#64748b',
+                    fillOpacity: 0.22,
+                    interactive: false,
                   }}
               />
-          );
-        })}
+          ))}
 
-        {/* Sun Position Marker */}
-        {sunMarkerPos && originSun && (
-            <Marker
-                position={[sunMarkerPos.lat, sunMarkerPos.lng]}
-                icon={sunDivIcon(originSun.altitudeDeg, isDaytime)}
-                interactive={false}
-            />
-        )}
-      </MapContainer>
+          {/* Compass ring around route start */}
+          {start && (
+              <Circle
+                  center={[start.lat, start.lng]}
+                  radius={sunRadius}
+                  pathOptions={{ color: ringColor, weight: 1, dashArray: '4 6', fill: false }}
+              />
+          )}
+
+          {/* Scored route segments */}
+          {segments.map((seg) => (
+              <Polyline
+                  key={seg.id || `${seg.a.lat}-${seg.b.lat}`}
+                  positions={[
+                    [seg.a.lat, seg.a.lng],
+                    [seg.b.lat, seg.b.lng],
+                  ]}
+                  pathOptions={{
+                    color: EXPOSURE_COLORS[seg.exposure?.level] || '#3B82F6',
+                    weight: 6,
+                    opacity: 0.95,
+                    lineCap: 'round',
+                  }}
+              />
+          ))}
+
+          {/* Unscored preview while route is drawn */}
+          {segments.length === 0 && routePoints.length > 0 && (
+              <Polyline
+                  positions={routePoints.map((p) => [p.lat, p.lng])}
+                  pathOptions={{ color: previewColor, weight: 4, dashArray: '2 8' }}
+              />
+          )}
+
+          {/* Waypoint Markers */}
+          {routePoints.map((p, i) => {
+            const kind =
+                i === 0 ? 'start' : i === routePoints.length - 1 && routePoints.length > 1 ? 'end' : 'waypoint';
+            return (
+                <CircleMarker
+                    key={i}
+                    center={[p.lat, p.lng]}
+                    radius={kind === 'waypoint' ? 4 : 7}
+                    pathOptions={{
+                      color: markerBorder,
+                      weight: 2,
+                      fillColor:
+                          kind === 'start'
+                              ? '#4C9A6A'
+                              : kind === 'end'
+                                  ? '#D64545'
+                                  : isDaytime
+                                      ? '#12161C'
+                                      : '#EDEFE9',
+                      fillOpacity: 1,
+                    }}
+                />
+            );
+          })}
+
+          {/* Sun Position Marker */}
+          {sunMarkerPos && originSun && (
+              <Marker
+                  position={[sunMarkerPos.lat, sunMarkerPos.lng]}
+                  icon={sunDivIcon(originSun.altitudeDeg, isDaytime)}
+                  interactive={false}
+              />
+          )}
+        </MapContainer>
+      </div>
   );
 }
