@@ -89,11 +89,11 @@ export default function RouteSummary({
                             SunSafeRun pushes workouts to Garmin via <strong>Intervals.icu</strong> (a trusted endurance platform).
                         </p>
 
-                        <div className="p-2 bg-white/70 rounded border border-amber-200/50 mb-2.5 text-[11px] space-y-1">
-                            <p className="font-medium text-amber-950">📋 First-time setup (takes ~2 mins):</p>
+                        <div className="p-2 bg-white/70 rounded border border-amber-200/50 mb-2.5 text-[11px] space-y-1.5">
+                            <p className="font-medium text-amber-950">📋 Setup Steps (~1–2 mins):</p>
                             <ol className="list-decimal pl-4 text-amber-900 space-y-1">
                                 <li>
-                                    Create or log in at{' '}
+                                    Log in or register at{' '}
                                     <a
                                         href="https://intervals.icu/settings"
                                         target="_blank"
@@ -104,9 +104,12 @@ export default function RouteSummary({
                                     </a>.
                                 </li>
                                 <li>
-                                    Under <strong>Garmin Connect</strong>, link your account and check <em>"Upload planned workouts"</em>.
+                                    Click the <strong className="text-amber-950">CONNECTIONS</strong> tab at the top.
                                 </li>
-                                <li>Authorize SunSafeRun below.</li>
+                                <li>
+                                    Under <strong className="text-amber-950">Garmin Connect</strong>, enable <em className="font-semibold text-amber-950">"Upload planned workouts"</em>.
+                                </li>
+                                <li>Return here and authorize SunSafeRun.</li>
                             </ol>
                         </div>
                     </div>
@@ -125,11 +128,11 @@ export default function RouteSummary({
                 /* Connected State: Explicit Garmin Link Notice + Sync Button */
                 <div className="mt-3 space-y-2">
                     <div className="p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-md text-[11px] text-blue-900 flex items-start gap-2">
-                        <span className="text-blue-600 text-sm shrink-0">⚠️</span>
+                        <span className="text-blue-600 text-sm shrink-0">💡</span>
                         <div>
-                            <p className="font-semibold text-blue-950 mb-0.5">First time syncing?</p>
+                            <p className="font-semibold text-blue-950 mb-0.5">Watch not updating?</p>
                             <p className="leading-snug text-blue-800">
-                                Make sure Garmin Connect is linked in your{' '}
+                                Open{' '}
                                 <a
                                     href="https://intervals.icu/settings"
                                     target="_blank"
@@ -137,8 +140,7 @@ export default function RouteSummary({
                                     className="font-semibold underline text-blue-950 hover:text-blue-700"
                                 >
                                     Intervals.icu Settings
-                                </a>{' '}
-                                with <em>"Upload planned workouts"</em> enabled, or workouts won't reach your watch.
+                                </a>, go to the <strong>CONNECTIONS</strong> tab, and ensure <em>"Upload planned workouts"</em> under Garmin Connect is checked.
                             </p>
                         </div>
                     </div>
@@ -166,7 +168,7 @@ export default function RouteSummary({
                         Open your phone's <strong>Garmin Connect app</strong> to sync to your watch.
                     </p>
                     <p className="text-[10px] text-green-700 pt-1 border-t border-green-200/60 text-center">
-                        Not seeing it on your watch? Ensure Garmin is linked in your{' '}
+                        Not on watch? Confirm <em>CONNECTIONS → Upload planned workouts</em> is checked in{' '}
                         <a
                             href="https://intervals.icu/settings"
                             target="_blank"
@@ -183,7 +185,7 @@ export default function RouteSummary({
                 <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 space-y-1">
                     <p className="font-semibold text-red-900 text-center">Failed to sync workout.</p>
                     <p className="text-[11px] text-red-700 text-center">
-                        Check your network or verify your connection in Intervals.icu settings.
+                        Check your connection in Intervals.icu settings.
                     </p>
                     <div className="text-center pt-1">
                         <a
