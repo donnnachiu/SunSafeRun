@@ -12,18 +12,16 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Base64 encode client credentials for Basic Auth
-        const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-        const tokenResponse = await fetch('https://intervals.icu/api/v1/oauth/token', {
+        const tokenResponse = await fetch('https://intervals.icu/api/oauth/token', {
             method: 'POST',
             headers: {
-                'Authorization': `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                grant_type: 'authorization_code',
+                client_id: clientId,
+                client_secret: clientSecret,
                 code: String(code),
+                grant_type: 'authorization_code',
                 redirect_uri: redirectUri,
             }),
         });
@@ -36,17 +34,16 @@ export default async function handler(req, res) {
 
         const data = await tokenResponse.json();
 
-        // Set secure HTTP-only cookie with access_token
-        if (data.access_token) {
+        if (data?.access_token) {
             res.setHeader(
                 'Set-Cookie',
                 `intervals_token=${data.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
             );
         }
 
-        res.redirect('/?connected=true');
+        return res.redirect('/?connected=true');
     } catch (err) {
         console.error('OAuth Exchange Error:', err);
-        res.redirect('/?error=oauth_failed');
+        return res.redirect('/?error=oauth_failed');
     }
 }
