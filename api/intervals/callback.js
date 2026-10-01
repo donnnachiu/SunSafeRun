@@ -3,22 +3,28 @@ export default async function handler(req, res) {
     const { code } = req.query;
     const clientId = process.env.INTERVALS_CLIENT_ID;
     const clientSecret = process.env.INTERVALS_CLIENT_SECRET;
-    const redirectUri = 'https://sun-safe-run.vercel.app/api/intervals/callback';
+    const redirectUri = process.env.APP_URL
+        ? `${process.env.APP_URL}/api/intervals/callback`
+        : 'https://sun-safe-run.vercel.app/api/intervals/callback';
 
     if (!code) {
         return res.redirect('/?error=no_code_provided');
     }
 
     try {
-        const tokenResponse = await fetch('https://intervals.icu/oauth/token', {
+        // Base64 encode client credentials for Basic Auth
+        const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+        const tokenResponse = await fetch('https://intervals.icu/api/v1/oauth/token', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            headers: {
+                'Authorization': `Basic ${credentials}`,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
             body: new URLSearchParams({
-                client_id: clientId,
-                client_secret: clientSecret,
-                code: String(code),
                 grant_type: 'authorization_code',
-                redirect_uri: redirectUri, // Must match the redirect_uri in auth.js
+                code: String(code),
+                redirect_uri: redirectUri,
             }),
         });
 
@@ -32,7 +38,10 @@ export default async function handler(req, res) {
 
         // Set secure HTTP-only cookie with access_token
         if (data.access_token) {
-            res.setHeader('Set-Cookie', `intervals_token=${data.access_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+            res.setHeader(
+                'Set-Cookie',
+                `intervals_token=${data.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
+            );
         }
 
         res.redirect('/?connected=true');
