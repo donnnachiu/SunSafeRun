@@ -16,7 +16,8 @@ export function getSimulatedDate(fractionalHour, baseDate = new Date()) {
 }
 
 /**
- * Fetches building footprints from OpenStreetMap Overpass API using fallback mirrors.
+ * Fetches building footprints via local serverless proxy route `/api/overpass`,
+ * falling back to direct GET requests on public Overpass mirrors if needed.
  */
 export async function fetchBuildingFootprints(bounds, signal) {
     if (!bounds) return [];
@@ -26,26 +27,23 @@ export async function fetchBuildingFootprints(bounds, signal) {
     const north = typeof bounds.getNorth === 'function' ? bounds.getNorth() : bounds.north;
     const east = typeof bounds.getEast === 'function' ? bounds.getEast() : bounds.east;
 
+    const bbox = `${south},${west},${north},${east}`;
     const query = `[out:json][timeout:15];(way["building"](${south},${west},${north},${east});relation["building"](${south},${west},${north},${east}););out body;>;out skel qt;`;
 
+    // Try local Vercel serverless proxy route first to avoid CORS/preflight issues,
+    // followed by direct GET calls to public mirrors as fallbacks
     const endpoints = [
-        'https://overpass-api.de/api/interpreter',
-        'https://overpass.kumi.systems/api/interpreter',
-        'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+        `/api/overpass?bbox=${encodeURIComponent(bbox)}`,
+        `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
+        `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(query)}`,
+        `https://overpass.private.coffee/api/interpreter?data=${encodeURIComponent(query)}`
     ];
 
     let data = null;
 
     for (const endpoint of endpoints) {
         try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                },
-                body: `data=${encodeURIComponent(query)}`,
-                signal,
-            });
+            const response = await fetch(endpoint, { signal });
 
             if (response.ok) {
                 data = await response.json();
@@ -53,17 +51,17 @@ export async function fetchBuildingFootprints(bounds, signal) {
             }
         } catch (err) {
             if (err.name === 'AbortError') throw err;
-            console.warn(`Overpass mirror failed (${endpoint}), trying next...`);
+            console.warn(`Overpass endpoint failed (${endpoint}), trying next...`);
         }
     }
 
     if (!data || !data.elements) return [];
 
-    // Store as [lng, lat] for standard Mapbox/Deck.gl/GeoJSON compatibility
+    // Save nodes as [longitude, latitude] for standard GeoJSON / Mapbox GL alignment
     const nodes = {};
     data.elements.forEach((el) => {
         if (el.type === 'node') {
-            nodes[el.id] = [el.lon, el.lat]; // FIXED: [lng, lat] order
+            nodes[el.id] = [el.lon, el.lat];
         }
     });
 
@@ -93,7 +91,7 @@ export async function fetchBuildingFootprints(bounds, signal) {
 
 /**
  * Computes 2D ground shadow polygon projected from building footprint relative to sun angle.
- * Output coordinates are in GeoJSON standard [longitude, latitude] format.
+ * Output coordinates are formatted as standard GeoJSON [longitude, latitude] arrays.
  */
 export function calculateBuildingShadow(
     building,
@@ -112,18 +110,16 @@ export function calculateBuildingShadow(
     const altitude = sunPos.altitude;
     const azimuth = sunPos.azimuth; // SunCalc azimuth: 0 = South, pi/2 = West
 
-    // If sun is at or below horizon, no shadow is cast
+    // No shadows cast when the sun is at or below the horizon
     if (altitude <= 0.05) return null;
 
     const shadowLengthRatio = 1 / Math.tan(altitude);
     const latMetersRatio = 111000;
     const lngMetersRatio = 111000 * Math.cos((lat * Math.PI) / 180);
 
-    // Limit maximum shadow length at low sun angles to prevent infinite polygons
+    // Limit maximum shadow length near sunrise/sunset to prevent unbounded geometry
     const shadowLengthMeters = Math.min(building.height * shadowLengthRatio, 250);
 
-    // SunCalc azimuth = 0 is South (+lat displacement for shadow)
-    // SunCalc azimuth = -pi/2 is East (-lng displacement for shadow)
     const shadowDy = (shadowLengthMeters * Math.cos(azimuth)) / latMetersRatio;
     const shadowDx = (shadowLengthMeters * Math.sin(azimuth)) / lngMetersRatio;
 
