@@ -182,8 +182,13 @@ export default function MapView({
     return buildings
         .map((b) => {
           if (!b.coords || b.coords.length === 0) return null;
-          const [bLat, bLng] = b.coords[0];
-          return calculateBuildingShadow(b, bLat, bLng, targetDate);
+
+          // 1. Correct destructuring order from GeoJSON [lng, lat]
+          const [bLng, bLat] = b.coords[0];
+          const shadow = calculateBuildingShadow(b, bLat, bLng, targetDate);
+
+          // 2. Map GeoJSON [lng, lat] to Leaflet [lat, lng]
+          return shadow ? shadow.map(([lng, lat]) => [lat, lng]) : null;
         })
         .filter(Boolean);
   }, [buildings, isDaytime, selectedTime, showShadows]);

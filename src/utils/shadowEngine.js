@@ -27,11 +27,15 @@ export async function fetchBuildingFootprints(bounds, signal) {
     const north = typeof bounds.getNorth === 'function' ? bounds.getNorth() : bounds.north;
     const east = typeof bounds.getEast === 'function' ? bounds.getEast() : bounds.east;
 
+    // Prevent huge queries when zoomed out too far (e.g., > 0.08 deg delta)
+    if (Math.abs(north - south) > 0.1 || Math.abs(east - west) > 0.1) {
+        console.warn('Map area too large for Overpass shadow query. Zoom in closer.');
+        return [];
+    }
+
     const bbox = `${south},${west},${north},${east}`;
     const query = `[out:json][timeout:15];(way["building"](${south},${west},${north},${east});relation["building"](${south},${west},${north},${east}););out body;>;out skel qt;`;
 
-    // Try local Vercel serverless proxy route first to avoid CORS/preflight issues,
-    // followed by direct GET calls to public mirrors as fallbacks
     const endpoints = [
         `/api/overpass?bbox=${encodeURIComponent(bbox)}`,
         `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`,
@@ -57,7 +61,7 @@ export async function fetchBuildingFootprints(bounds, signal) {
 
     if (!data || !data.elements) return [];
 
-    // Save nodes as [longitude, latitude] for standard GeoJSON / Mapbox GL alignment
+    // Parse nodes into [longitude, latitude] format
     const nodes = {};
     data.elements.forEach((el) => {
         if (el.type === 'node') {
@@ -91,7 +95,7 @@ export async function fetchBuildingFootprints(bounds, signal) {
 
 /**
  * Computes 2D ground shadow polygon projected from building footprint relative to sun angle.
- * Output coordinates are formatted as standard GeoJSON [longitude, latitude] arrays.
+ * Output coordinates are formatted as standard closed GeoJSON [longitude, latitude] ring.
  */
 export function calculateBuildingShadow(
     building,
@@ -110,30 +114,61 @@ export function calculateBuildingShadow(
     const altitude = sunPos.altitude;
     const azimuth = sunPos.azimuth; // SunCalc azimuth: 0 = South, pi/2 = West
 
-    // No shadows cast when the sun is at or below the horizon
-    if (altitude <= 0.05) return null;
+    // No shadows cast when sun is below horizon
+    if (altitude <= 0.02) return null;
 
     const shadowLengthRatio = 1 / Math.tan(altitude);
     const latMetersRatio = 111000;
     const lngMetersRatio = 111000 * Math.cos((lat * Math.PI) / 180);
 
-    // Limit maximum shadow length near sunrise/sunset to prevent unbounded geometry
-    const shadowLengthMeters = Math.min(building.height * shadowLengthRatio, 250);
+    // Dynamic max shadow length for visibility
+    const shadowLengthMeters = Math.min(building.height * shadowLengthRatio, 300);
 
     const shadowDy = (shadowLengthMeters * Math.cos(azimuth)) / latMetersRatio;
     const shadowDx = (shadowLengthMeters * Math.sin(azimuth)) / lngMetersRatio;
 
-    const shadowPolygon = [];
+    const ring = [];
 
     // Base building footprint [lng, lat]
     building.coords.forEach(([bLng, bLat]) => {
-        shadowPolygon.push([bLng, bLat]);
+        ring.push([bLng, bLat]);
     });
 
-    // Projected shadow roof footprint [lng + dx, lat + dy]
+    // Projected roof footprint [lng + dx, lat + dy]
     building.coords.slice().reverse().forEach(([bLng, bLat]) => {
-        shadowPolygon.push([bLng + shadowDx, bLat + shadowDy]);
+        ring.push([bLng + shadowDx, bLat + shadowDy]);
     });
 
-    return shadowPolygon;
+    // CRITICAL: Close the GeoJSON polygon ring by repeating the first coordinate
+    if (ring.length > 0) {
+        ring.push([ring[0][0], ring[0][1]]);
+    }
+
+    return ring;
+}
+
+/**
+ * Helper to build a complete GeoJSON FeatureCollection ready for Mapbox/Leaflet source rendering.
+ */
+export function generateShadowGeoJSON(buildings, centerLat, centerLng, timeOrDate) {
+    const features = [];
+
+    buildings.forEach((b) => {
+        const ring = calculateBuildingShadow(b, centerLat, centerLng, timeOrDate);
+        if (ring && ring.length >= 4) {
+            features.push({
+                type: 'Feature',
+                properties: { buildingId: b.id },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [ring], // Single outer ring
+                },
+            });
+        }
+    });
+
+    return {
+        type: 'FeatureCollection',
+        features,
+    };
 }
