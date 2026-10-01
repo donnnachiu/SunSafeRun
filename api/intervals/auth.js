@@ -10,7 +10,7 @@ export default function handler(req, res) {
     }
 
     const redirectUri = 'https://sun-safe-run.vercel.app/api/intervals/callback';
-    const scope = 'calendar:write,activity:write';
+    const scope = 'CALENDAR:WRITE,ACTIVITY:WRITE';
 
     const params = new URLSearchParams({
         client_id: clientId,
