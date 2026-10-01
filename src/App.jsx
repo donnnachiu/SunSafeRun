@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Gauge, CloudRain } from 'lucide-react';
 import MapView from './components/MapView';
 import SunArcSlider, { formatHour } from './components/SunArcSlider';
@@ -14,7 +14,6 @@ import { useTheme } from './hooks/useTheme';
 import { getSunTimes } from './utils/sunCalculations';
 import { classifyRain, RAIN_LABELS, RAIN_COLORS } from './utils/rainModel';
 
-const DEFAULT_HOUR = 7.5;
 const MIN_HOUR = 5;
 const MAX_HOUR = 20;
 const FALLBACK_HOUR = 10; // Default to 10 AM
@@ -31,10 +30,64 @@ export default function App() {
   const [hour, setHour] = useState(currentHourClamped);
   const [flyTarget, setFlyTarget] = useState(null);
   const [sheetSnap, setSheetSnap] = useState('collapsed');
+  const [isConnected, setIsConnected] = useState(false);
   const { theme, isDaytime, toggleTheme } = useTheme();
 
   const { segments, originSun, totalDistance, summary, reading, hourly, weatherStatus, weatherError } =
       useSunExposure(routePoints, hour);
+
+  // Restore route points & time after returning from Intervals.icu OAuth
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('connected') === 'true') {
+      // 1. Restore route points
+      const savedPoints = localStorage.getItem('sunsaferun_route_points');
+      if (savedPoints) {
+        try {
+          const parsed = JSON.parse(savedPoints);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setRoutePoints(parsed);
+            // Pan map back to start of route
+            setFlyTarget({ lat: parsed[0].lat, lng: parsed[0].lng, nonce: Date.now() });
+          }
+        } catch (e) {
+          console.error('Failed to parse saved route points:', e);
+        }
+        localStorage.removeItem('sunsaferun_route_points');
+      }
+
+      // 2. Restore selected hour
+      const savedHour = localStorage.getItem('sunsaferun_hour');
+      if (savedHour) {
+        try {
+          const parsedHour = JSON.parse(savedHour);
+          if (typeof parsedHour === 'number') {
+            setHour(parsedHour);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved hour:', e);
+        }
+        localStorage.removeItem('sunsaferun_hour');
+      }
+
+      // 3. Update connection state
+      setIsConnected(true);
+      localStorage.setItem('intervals_connected', 'true');
+
+      // 4. Remove query param from URL without refreshing page
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (localStorage.getItem('intervals_connected') === 'true') {
+      setIsConnected(true);
+    }
+  }, []);
+
+  // Save current state before launching OAuth redirect
+  const handleInitiateGarminAuth = useCallback(() => {
+    localStorage.setItem('sunsaferun_route_points', JSON.stringify(routePoints));
+    localStorage.setItem('sunsaferun_hour', JSON.stringify(hour));
+    window.location.href = '/api/intervals/auth';
+  }, [routePoints, hour]);
 
   const handleMapClick = useCallback((point) => {
     setRoutePoints((prev) => [...prev, point]);
@@ -48,15 +101,11 @@ export default function App() {
     setRoutePoints([]);
   }, []);
 
-  // Typed search sets/replaces the route's first point (keeps any stops
-  // that were already placed) and pans the map there.
   const handleSelectStart = useCallback((place) => {
     setRoutePoints((prev) => [{ lat: place.lat, lng: place.lng }, ...prev.slice(1)]);
     setFlyTarget({ lat: place.lat, lng: place.lng, nonce: Date.now() });
   }, []);
 
-  // Typed search appends a stop to the end of the route, same as clicking
-  // the map — lets you build a route by search alone, like Google Maps.
   const handleSelectStop = useCallback((place) => {
     setRoutePoints((prev) => [...prev, { lat: place.lat, lng: place.lng }]);
     setFlyTarget({ lat: place.lat, lng: place.lng, nonce: Date.now() });
@@ -76,8 +125,6 @@ export default function App() {
 
   const uv = reading?.uvIndex ?? 0;
 
-  // One-line status shown on the collapsed mobile sheet, so the map stays
-  // almost fully visible while still surfacing the info that matters most.
   const peekSummary = (
       <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs">
         <span className="font-mono font-semibold text-paper">{formatHour(hour)}</span>
@@ -119,12 +166,14 @@ export default function App() {
 
   return (
       <div className={`app-height flex flex-col bg-ink ${theme}`}>
-        <Header isDaytime={isDaytime} onToggleTheme={toggleTheme} />
+        <Header
+            isDaytime={isDaytime}
+            onToggleTheme={toggleTheme}
+            isConnected={isConnected}
+            onConnectGarmin={handleInitiateGarminAuth}
+        />
 
         <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-          {/* Map fills the full remaining height on every breakpoint — nothing
-            in document flow shrinks it anymore. On mobile, the stats live in
-            a BottomSheet that overlays the map instead of pushing it up. */}
           <div className="relative flex-1 min-h-0">
             <MapView
                 routePoints={routePoints}
@@ -153,7 +202,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Legend stays as a map overlay only where there's room for it (desktop) */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 p-3 hidden lg:flex justify-center z-[1000]">
               <div className="pointer-events-auto">
                 <Legend />
@@ -165,7 +213,6 @@ export default function App() {
             </BottomSheet>
           </div>
 
-          {/* Desktop sidebar */}
           <aside className="hidden lg:flex w-[380px] shrink-0 border-l border-line bg-ink flex-col min-h-0">
             <div className="p-4 space-y-4 overflow-y-auto thin-scroll">{sidebarContent}</div>
           </aside>

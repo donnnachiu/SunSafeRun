@@ -106,6 +106,9 @@ export default function StatsPanel({
                                        hasRoute,
                                        hour,
                                        hourly,
+                                       routePoints = [],
+                                       isConnectedToGarmin = false,
+                                       onConnect,
                                    }) {
     if (!hasRoute) {
         return (
@@ -240,7 +243,13 @@ export default function StatsPanel({
 
                     {/* Garmin Watch Sync Integration */}
                     <div className="mt-4 pt-4 border-t border-line">
-                        <RouteSummary totalDistance={totalDistance} />
+                        <RouteSummary
+                            totalDistance={totalDistance}
+                            isConnectedToGarmin={isConnectedToGarmin}
+                            routePoints={routePoints}
+                            hour={hour}
+                            onConnect={onConnect}
+                        />
                     </div>
                 </div>
             )}

@@ -5,12 +5,29 @@ export default function RouteSummary({
                                          totalDistance,
                                          isConnectedToGarmin = false,
                                          routeId = 'route-1',
-                                         routeName = 'SunSafeRun Route'
+                                         routeName = 'SunSafeRun Route',
+                                         routePoints = [],
+                                         hour,
+                                         onConnect
                                      }) {
     const [syncing, setSyncing] = useState(false);
     const [syncStatus, setSyncStatus] = useState(null); // 'success' | 'error' | null
 
     const handleConnect = () => {
+        if (onConnect) {
+            onConnect();
+            return;
+        }
+
+        // Save current route points and time slider selection before page unload
+        if (routePoints && routePoints.length > 0) {
+            localStorage.setItem('sunsaferun_route_points', JSON.stringify(routePoints));
+        }
+        if (hour !== undefined && hour !== null) {
+            localStorage.setItem('sunsaferun_hour', JSON.stringify(hour));
+        }
+
+        // Redirect to OAuth
         window.location.href = '/api/intervals/auth';
     };
 
