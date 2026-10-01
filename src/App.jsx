@@ -36,19 +36,32 @@ export default function App() {
   const { segments, originSun, totalDistance, summary, reading, hourly, weatherStatus, weatherError } =
       useSunExposure(routePoints, hour);
 
-  // Restore route points & time after returning from Intervals.icu OAuth
+  // Check saved connection status & handle postMessage from OAuth popup or redirect fallback
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    if (localStorage.getItem('intervals_connected') === 'true') {
+      setIsConnected(true);
+    }
 
+    // 1. Popup window postMessage listener
+    const handleMessage = (event) => {
+      if (event.data?.type === 'INTERVALS_AUTH_SUCCESS') {
+        setIsConnected(true);
+        localStorage.setItem('intervals_connected', 'true');
+      } else if (event.data?.type === 'INTERVALS_AUTH_ERROR') {
+        console.error('Intervals/Garmin Auth Failed:', event.data.error);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
+    // 2. Full-page redirect fallback (if popup was blocked or opened directly)
+    const params = new URLSearchParams(window.location.search);
     if (params.get('connected') === 'true') {
-      // 1. Restore route points
       const savedPoints = localStorage.getItem('sunsaferun_route_points');
       if (savedPoints) {
         try {
           const parsed = JSON.parse(savedPoints);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setRoutePoints(parsed);
-            // Pan map back to start of route
             setFlyTarget({ lat: parsed[0].lat, lng: parsed[0].lng, nonce: Date.now() });
           }
         } catch (e) {
@@ -57,7 +70,6 @@ export default function App() {
         localStorage.removeItem('sunsaferun_route_points');
       }
 
-      // 2. Restore selected hour
       const savedHour = localStorage.getItem('sunsaferun_hour');
       if (savedHour) {
         try {
@@ -71,22 +83,34 @@ export default function App() {
         localStorage.removeItem('sunsaferun_hour');
       }
 
-      // 3. Update connection state
       setIsConnected(true);
       localStorage.setItem('intervals_connected', 'true');
-
-      // 4. Remove query param from URL without refreshing page
       window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (localStorage.getItem('intervals_connected') === 'true') {
-      setIsConnected(true);
     }
+
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Save current state before launching OAuth redirect
+  // Initiate Auth using popup window (with localStorage backup)
   const handleInitiateGarminAuth = useCallback(() => {
     localStorage.setItem('sunsaferun_route_points', JSON.stringify(routePoints));
     localStorage.setItem('sunsaferun_hour', JSON.stringify(hour));
-    window.location.href = '/api/intervals/auth';
+
+    const width = 500;
+    const height = 650;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+        '/api/intervals/auth',
+        'IntervalsAuthWindow',
+        `width=${width},height=${height},left=${left},top=${top},status=0,toolbar=0`
+    );
+
+    // Fallback if browser blocks popups
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      window.location.href = '/api/intervals/auth';
+    }
   }, [routePoints, hour]);
 
   const handleMapClick = useCallback((point) => {
@@ -160,6 +184,9 @@ export default function App() {
             hasRoute={routePoints.length > 0}
             hour={hour}
             hourly={hourly}
+            routePoints={routePoints}
+            isConnectedToGarmin={isConnected}
+            onConnect={handleInitiateGarminAuth}
         />
       </>
   );

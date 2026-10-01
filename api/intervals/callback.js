@@ -8,15 +8,22 @@ export default async function handler(req, res) {
         : 'https://sun-safe-run.vercel.app/api/intervals/callback';
 
     if (!code) {
-        return res.redirect('/?error=no_code_provided');
+        return res.send(`
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'no_code' }, '*');
+                    window.close();
+                } else {
+                    window.location.href = '/?error=no_code';
+                }
+            </script>
+        `);
     }
 
     try {
         const tokenResponse = await fetch('https://intervals.icu/api/oauth/token', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
                 client_id: clientId,
                 client_secret: clientSecret,
@@ -27,9 +34,16 @@ export default async function handler(req, res) {
         });
 
         if (!tokenResponse.ok) {
-            const errorText = await tokenResponse.text();
-            console.error('Intervals OAuth Token Error:', errorText);
-            return res.redirect('/?error=token_exchange_failed');
+            return res.send(`
+                <script>
+                    if (window.opener) {
+                        window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'token_exchange_failed' }, '*');
+                        window.close();
+                    } else {
+                        window.location.href = '/?error=token_exchange_failed';
+                    }
+                </script>
+            `);
         }
 
         const data = await tokenResponse.json();
@@ -41,9 +55,32 @@ export default async function handler(req, res) {
             );
         }
 
-        return res.redirect('/?connected=true');
+        // Send success message to parent window and close popup
+        return res.send(`
+            <html>
+                <body>
+                    <p>Connecting to SunSafeRun...</p>
+                    <script>
+                        if (window.opener) {
+                            window.opener.postMessage({ type: 'INTERVALS_AUTH_SUCCESS' }, '*');
+                            window.close();
+                        } else {
+                            window.location.href = '/?connected=true';
+                        }
+                    </script>
+                </body>
+            </html>
+        `);
     } catch (err) {
-        console.error('OAuth Exchange Error:', err);
-        return res.redirect('/?error=oauth_failed');
+        return res.send(`
+            <script>
+                if (window.opener) {
+                    window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'oauth_failed' }, '*');
+                    window.close();
+                } else {
+                    window.location.href = '/?error=oauth_failed';
+                }
+            </script>
+        `);
     }
 }
