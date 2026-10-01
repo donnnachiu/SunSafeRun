@@ -85,8 +85,8 @@ export function ExposureFeedback({ routeId, routeName }) {
           <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="Tell us what was off (e.g., direct sun on King's Road, unexpected building shade...)"
-              className="w-full text-xs p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none outline-none"
+              placeholder="Feedback makes us better and we appreciate your time."
+              className="w-full text-xs text-slate-900 placeholder:text-slate-400 p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 resize-none outline-none font-normal"
               rows={3}
           />
 

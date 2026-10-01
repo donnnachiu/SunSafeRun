@@ -1,43 +1,37 @@
-// api/garmin/push-workout.js (Node.js / Express or Vercel API function)
-
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).end();
 
-    const { workout, scheduledDate } = req.body;
+    const { workoutName, distanceMeters, scheduledDate } = req.body;
+    const accessToken = req.cookies.intervals_token; // or session token
 
-    // Retrieve user's stored Garmin access token (from session or database)
-    const userGarminAccessToken = req.session?.garminAccessToken;
-
-    if (!userGarminAccessToken) {
-        return res.status(401).json({ error: 'Garmin account not connected' });
+    if (!accessToken) {
+        return res.status(401).json({ error: 'Intervals/Garmin account not connected' });
     }
 
     try {
-        // 1. Post workout structure to Garmin Training API
-        const workoutRes = await fetch('https://healthapi.garmin.com/training-api/workout', {
+        // Post workout event to athlete's Intervals calendar
+        const response = await fetch('https://intervals.icu/api/v1/athlete/0/events', {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${userGarminAccessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(workout),
+            body: JSON.stringify({
+                category: 'WORKOUT',
+                type: 'Run',
+                name: workoutName || 'SunSafeRun Route ☀️',
+                start_date_local: `${scheduledDate}T00:00:00`,
+                moving_time: Math.round(distanceMeters / 2.7), // estimated duration at ~6:10/km pace
+                description: `SunSafeRun shade-optimized workout (${Math.round(distanceMeters)}m)`,
+            }),
         });
 
-        const workoutData = await workoutRes.json();
+        if (!response.ok) throw new Error('Failed to push to Intervals');
 
-        // 2. Schedule workout onto user's Garmin Calendar for today
-        await fetch(`https://healthapi.garmin.com/training-api/schedule/${workoutData.workoutId}`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${userGarminAccessToken}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ date: scheduledDate }),
-        });
-
-        return res.status(200).json({ success: true, workoutId: workoutData.workoutId });
+        const data = await response.json();
+        return res.status(200).json({ success: true, eventId: data.id });
     } catch (error) {
-        console.error('Garmin API Error:', error);
-        return res.status(500).json({ error: 'Failed to push to Garmin' });
+        console.error('Push Error:', error);
+        return res.status(500).json({ error: 'Failed to push workout' });
     }
 }
