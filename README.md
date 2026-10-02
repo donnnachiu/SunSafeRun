@@ -18,6 +18,9 @@ SunSafeRun app is an interactive React dashboard that helps long-distance runner
 - **📍 Interactive Waypoint Builder:**
   Click anywhere on the map or use the address search bar to build custom routes with live distance calculation and undo/clear options.
 
+- **💧 Hydration & Comfort POI Filters:**
+  Interactive map toggles for public water dispensers and restrooms (including standard, accessible, and universal facilities) mapped along your training routes to help you stay hydrated and plan essential pit stops.
+
 # 🚀 Quick Start
 
 1. Clone the repository
@@ -58,5 +61,6 @@ Open the printed local URL to drop points on the map, draw your route, and slide
   the *currently selected* simulated time crosses the "rain likely" threshold (60%+
   probability, or meaningful expected rainfall) — a clear, distinct blue signal that never
   gets confused with the green/yellow/red sun-exposure scale.
+- POI Service & Amenities (`poiService.js`): Parses and normalizes mixed public datasets (FEHD public restrooms and water dispenser locations) with dedicated coordinate mapping, custom icons, and color-coding to support long-distance running logistics.
 
-Built entirely using React, Vite, React-Leaflet, and with the love of Claude AI
+Built entirely using React, Vite, React-Leaflet, and with the love of Claude and Gemini
