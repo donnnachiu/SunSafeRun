@@ -1,6 +1,23 @@
 # SunSafeRun
 SunSafeRun app is an interactive React dashboard that helps long-distance runners map out outdoor routes based on solar geometry, live weather, and route bearings. It helps you survive intense summer training blocks without needing half a bottle of sunscreen
 
+## ✨ Key Features
+
+- **☀️ Solar Azimuth & Direction Indicator:**
+  Visualizes the sun's exact position, azimuth angle, and altitude relative to your starting location using an interactive compass ring.
+
+- **⏱️ Simulated Run Time Slider:**
+  Scrub through any time of day (from 5:00 AM to 8:00 PM) to preview solar angles, sunrise/sunset times, and potential exposure before stepping outside.
+
+- **🗺️ Directional Route Exposure Scoring:**
+  Color-codes each route segment based on whether you are running directly into direct solar glare versus away or perpendicular to the sun.
+
+- **🌧️ Integrated Weather & Rain Likelihood:**
+  Displays precipitation chance and rain conditions tailored to your planned run time.
+
+- **📍 Interactive Waypoint Builder:**
+  Click anywhere on the map or use the address search bar to build custom routes with live distance calculation and undo/clear options.
+
 # 🚀 Quick Start
 
 1. Clone the repository

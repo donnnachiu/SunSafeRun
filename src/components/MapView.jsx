@@ -6,30 +6,15 @@ import {
   CircleMarker,
   Circle,
   Marker,
-  Polygon,
   useMapEvents,
   useMap,
 } from 'react-leaflet';
 import L from 'leaflet';
 import { destinationPoint, calculateRouteDistance } from '../utils/routeUtils';
 import { EXPOSURE_COLORS } from '../utils/sunCalculations';
-import { fetchBuildingFootprints, calculateBuildingShadow } from '../utils/shadowEngine';
 
 export const DEFAULT_CENTER = { lat: 22.3026, lng: 114.1602 };
 const DEFAULT_ZOOM = 15;
-
-/** Ensures shadows sit on a Leaflet pane BELOW route lines and markers */
-function ShadowPaneSetup() {
-  const map = useMap();
-  useEffect(() => {
-    if (!map.getPane('shadowPane')) {
-      const pane = map.createPane('shadowPane');
-      pane.style.zIndex = '350'; // Standard vectors/route lines render at zIndex 400
-      pane.style.pointerEvents = 'none';
-    }
-  }, [map]);
-  return null;
-}
 
 /** Captures click events on the map */
 function ClickCapture({ onMapClick }) {
@@ -116,51 +101,6 @@ function sunDivIcon(altitudeDeg, isDaytime) {
   return L.divIcon({ html, className: 'sun-glyph-marker', iconSize: [28, 28], iconAnchor: [14, 14] });
 }
 
-/** Automatically fetches building footprints when zooming or panning with debouncing */
-function BuildingShadowLoader({ onBuildingsFetched }) {
-  const map = useMap();
-
-  useEffect(() => {
-    let controller = new AbortController();
-    let timer = null;
-
-    async function loadBuildings() {
-      if (map.getZoom() < 13) return; // Only fetch when zoomed in to street level
-
-      controller.abort();
-      controller = new AbortController();
-
-      try {
-        const bounds = map.getBounds();
-        const buildings = await fetchBuildingFootprints(bounds, controller.signal);
-        if (buildings.length > 0) {
-          onBuildingsFetched(buildings);
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Error fetching building shadows:', err);
-        }
-      }
-    }
-
-    const handleMoveEnd = () => {
-      clearTimeout(timer);
-      timer = setTimeout(loadBuildings, 400);
-    };
-
-    loadBuildings();
-    map.on('moveend', handleMoveEnd);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-      map.off('moveend', handleMoveEnd);
-    };
-  }, [map, onBuildingsFetched]);
-
-  return null;
-}
-
 export default function MapView({
                                   routePoints = [],
                                   segments = [],
@@ -171,27 +111,6 @@ export default function MapView({
                                   selectedTime,
                                 }) {
   const [currentCenter, setCurrentCenter] = useState(DEFAULT_CENTER);
-  const [buildings, setBuildings] = useState([]);
-  const [showShadows, setShowShadows] = useState(true); // Toggle building shadows (default: true)
-
-  // Dynamic ground shadow calculation per building footprint
-  const shadowPolygons = useMemo(() => {
-    if (!showShadows || !isDaytime || buildings.length === 0) return [];
-    const targetDate = selectedTime !== undefined && selectedTime !== null ? selectedTime : new Date();
-
-    return buildings
-        .map((b) => {
-          if (!b.coords || b.coords.length === 0) return null;
-
-          // 1. Correct destructuring order from GeoJSON [lng, lat]
-          const [bLng, bLat] = b.coords[0];
-          const shadow = calculateBuildingShadow(b, bLat, bLng, targetDate);
-
-          // 2. Map GeoJSON [lng, lat] to Leaflet [lat, lng]
-          return shadow ? shadow.map(([lng, lat]) => [lat, lng]) : null;
-        })
-        .filter(Boolean);
-  }, [buildings, isDaytime, selectedTime, showShadows]);
 
   const start = routePoints[0];
   const totalDistance = useMemo(() => calculateRouteDistance(routePoints), [routePoints]);
@@ -206,22 +125,6 @@ export default function MapView({
 
   return (
       <div className="relative h-full w-full">
-        {/* Map Control: Building Shadow Toggle */}
-        <div className="absolute top-3 right-3 z-[500]">
-          <button
-              type="button"
-              onClick={() => setShowShadows((prev) => !prev)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium backdrop-blur-md transition-all border shadow-sm ${
-                  showShadows
-                      ? 'bg-slate-900/80 text-amber-400 border-amber-500/30'
-                      : 'bg-slate-900/60 text-slate-400 border-slate-700/50 hover:text-slate-200'
-              }`}
-          >
-            <span className={`w-2 h-2 rounded-full ${showShadows ? 'bg-amber-400' : 'bg-slate-500'}`} />
-            Building Shadows {showShadows ? 'On' : 'Off'}
-          </button>
-        </div>
-
         <MapContainer
             center={[currentCenter.lat, currentCenter.lng]}
             zoom={DEFAULT_ZOOM}
@@ -233,27 +136,10 @@ export default function MapView({
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <ShadowPaneSetup />
           <ClickCapture onMapClick={onMapClick} />
           <LocationInitializer onLocationFound={setCurrentCenter} />
           <MapCenterTracker onCenterChange={setCurrentCenter} />
           <FlyToHandler target={flyTarget} />
-          <BuildingShadowLoader onBuildingsFetched={setBuildings} />
-
-          {/* Render 3D Building Shadow Overlay on low zIndex shadowPane */}
-          {shadowPolygons.map((shadowCoords, idx) => (
-              <Polygon
-                  key={`shadow-${idx}`}
-                  positions={shadowCoords}
-                  pane="shadowPane"
-                  pathOptions={{
-                    stroke: false,
-                    fillColor: '#64748b',
-                    fillOpacity: 0.22,
-                    interactive: false,
-                  }}
-              />
-          ))}
 
           {/* Compass ring around route start */}
           {start && (
