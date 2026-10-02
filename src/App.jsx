@@ -1,6 +1,8 @@
+// src/App.jsx
 import { useCallback, useState, useEffect } from 'react';
 import { Gauge, CloudRain } from 'lucide-react';
 import MapView from './components/MapView';
+import POILayer from './components/POILayer';
 import SunArcSlider, { formatHour } from './components/SunArcSlider';
 import StatsPanel from './components/StatsPanel';
 import RouteControls from './components/RouteControls';
@@ -13,10 +15,14 @@ import { useSunExposure } from './hooks/useSunExposure';
 import { useTheme } from './hooks/useTheme';
 import { getSunTimes } from './utils/sunCalculations';
 import { classifyRain, RAIN_LABELS, RAIN_COLORS } from './utils/rainModel';
+import { fetchRunnerPOIs } from './services/poiService';
+import { POI_CATEGORIES } from './constants/poiCategories';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 const MIN_HOUR = 5;
 const MAX_HOUR = 20;
-const FALLBACK_HOUR = 10; // Default to 10 AM
+const FALLBACK_HOUR = 10;
 
 function currentHourClamped() {
   const now = new Date();
@@ -33,16 +39,29 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const { theme, isDaytime, toggleTheme } = useTheme();
 
+  // POI state using imported constants
+  const [poiList, setPoiList] = useState([]);
+  const [activeCategories, setActiveCategories] = useState([
+    POI_CATEGORIES.WATER.id,
+    POI_CATEGORIES.RESTROOM.id,
+  ]);
+
   const { segments, originSun, totalDistance, summary, reading, hourly, weatherStatus, weatherError } =
       useSunExposure(routePoints, hour);
 
-  // Check saved connection status & handle postMessage from OAuth popup or redirect fallback
+  // Load static POIs on component mount
+  useEffect(() => {
+    const pois = fetchRunnerPOIs();
+    setPoiList(pois);
+  }, []);
+
+  const isBottomDetailsOpen = sheetSnap !== 'collapsed' && sheetSnap !== 'peek';
+
   useEffect(() => {
     if (localStorage.getItem('intervals_connected') === 'true') {
       setIsConnected(true);
     }
 
-    // 1. Popup window postMessage listener
     const handleMessage = (event) => {
       if (event.data?.type === 'INTERVALS_AUTH_SUCCESS') {
         setIsConnected(true);
@@ -53,7 +72,6 @@ export default function App() {
     };
     window.addEventListener('message', handleMessage);
 
-    // 2. Full-page redirect fallback (if popup was blocked or opened directly)
     const params = new URLSearchParams(window.location.search);
     if (params.get('connected') === 'true') {
       const savedPoints = localStorage.getItem('sunsaferun_route_points');
@@ -91,7 +109,6 @@ export default function App() {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Initiate Auth using popup window (with localStorage backup)
   const handleInitiateGarminAuth = useCallback(() => {
     localStorage.setItem('sunsaferun_route_points', JSON.stringify(routePoints));
     localStorage.setItem('sunsaferun_hour', JSON.stringify(hour));
@@ -107,7 +124,6 @@ export default function App() {
         `width=${width},height=${height},left=${left},top=${top},status=0,toolbar=0`
     );
 
-    // Fallback if browser blocks popups
     if (!popup || popup.closed || typeof popup.closed === 'undefined') {
       window.location.href = '/api/intervals/auth';
     }
@@ -134,6 +150,14 @@ export default function App() {
     setRoutePoints((prev) => [...prev, { lat: place.lat, lng: place.lng }]);
     setFlyTarget({ lat: place.lat, lng: place.lng, nonce: Date.now() });
   }, []);
+
+  const toggleCategory = (categoryId) => {
+    setActiveCategories((prev) =>
+        prev.includes(categoryId)
+            ? prev.filter((c) => c !== categoryId)
+            : [...prev, categoryId]
+    );
+  };
 
   const sunTimes =
       routePoints.length > 0
@@ -209,8 +233,12 @@ export default function App() {
                 onMapClick={handleMapClick}
                 isDaytime={isDaytime}
                 flyTarget={flyTarget}
-            />
+                isCollapsed={isBottomDetailsOpen}
+            >
+              <POILayer poiList={poiList} activeCategories={activeCategories} />
+            </MapView>
 
+            {/* Top Control Stack (Search Bar, Controls, & Filter Pills) */}
             <div className="pointer-events-none absolute inset-x-0 top-0 p-3 flex flex-col gap-2 z-[1000]">
               <div className="pointer-events-auto">
                 <RouteSearchBar onSelectStart={handleSelectStart} onSelectStop={handleSelectStop} />
@@ -218,6 +246,33 @@ export default function App() {
               <div className="pointer-events-auto">
                 <RouteControls pointCount={routePoints.length} onUndo={handleUndo} onClear={handleClear} />
               </div>
+
+              {/* Water & Toilets Toggle Pills */}
+              <div className="pointer-events-auto flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => toggleCategory(POI_CATEGORIES.WATER.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md border transition-all ${
+                        activeCategories.includes(POI_CATEGORIES.WATER.id)
+                            ? 'bg-sky-600 text-white border-sky-600 shadow-sky-600/20'
+                            : 'bg-surface text-paper border-line hover:bg-surface/80'
+                    }`}
+                >
+                  {POI_CATEGORIES.WATER.icon} {POI_CATEGORIES.WATER.label}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => toggleCategory(POI_CATEGORIES.RESTROOM.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md border transition-all ${
+                        activeCategories.includes(POI_CATEGORIES.RESTROOM.id)
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-emerald-600/20'
+                            : 'bg-surface text-paper border-line hover:bg-surface/80'
+                    }`}
+                >
+                  {POI_CATEGORIES.RESTROOM.icon} {POI_CATEGORIES.RESTROOM.label}
+                </button>
+              </div>
+
               {rainLevel !== 'clear' && (
                   <div className="flex justify-center">
                     <RainBanner
