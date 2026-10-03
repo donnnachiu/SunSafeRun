@@ -7113,10 +7113,11 @@
                 "OBJECTID": 214,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
-                "DATASET_EN": "Water Dispensers",
+                "DATASET_EN": "Water Dispenser",
                 "DATASET_TC": "飲水機",
                 "ADDRESS_EN": "West Kowloon Cultural District - Art Park (Freespace / Central Lawn)",
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (自由空間/中央草坪)",
+                "SEARCH02_EN": "Water Dispenser Location",
                 "DISTRICT_EN": "Yau Tsim Mong",
                 "DISTRICT_TC": "油尖旺"
             }
@@ -7126,18 +7127,19 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    114.1572954256263,
-                    22.300421989964192
+                    114.15586094929927,
+                    22.29886502136314
                 ]
             },
             "properties": {
                 "OBJECTID": 215,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
-                "DATASET_EN": "Water Dispensers",
+                "DATASET_EN": "Water Dispenser",
                 "DATASET_TC": "飲水機",
                 "ADDRESS_EN": "West Kowloon Cultural District - Art Park (Waterfront Promenade West)",
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (海濱長廊西面)",
+                "SEARCH02_EN": "Water Dispenser Location",
                 "DISTRICT_EN": "Yau Tsim Mong",
                 "DISTRICT_TC": "油尖旺"
             }
@@ -7147,21 +7149,232 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    114.15519164321385,
-                    22.299515076101006
+                    114.15535286828465,
+                    22.29918021898038
                 ]
             },
             "properties": {
                 "OBJECTID": 216,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
-                "DATASET_EN": "Water Dispensers",
+                "DATASET_EN": "Water Dispenser",
                 "DATASET_TC": "飲水機",
+                "SEARCH02_EN": "Water Dispenser Location",
                 "ADDRESS_EN": "West Kowloon Cultural District - Art Park (M+ / Museum Approach)",
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (M+ / 博物館道)",
                 "DISTRICT_EN": "Yau Tsim Mong",
                 "DISTRICT_TC": "油尖旺"
             }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.15749895011056,
+              22.299509278790378
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Public Restroom",
+            "POI_TYPE_TC": "公廁",
+            "DATASET_EN": "Public Restroom",
+            "DATASET_TC": "公廁",
+            "ADDRESS_EN": "West Kowloon Public Restroom",
+            "ADDRESS_TC": "西九文化區公廁",
+            "SEARCH02_EN": "Public Restroom",
+            "DISTRICT_EN": "Yau Tsim Mong",
+            "DISTRICT_TC": "油尖旺"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.19970908264894,
+              22.318033018562257
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Public Restroom",
+            "POI_TYPE_TC": "公廁",
+            "DATASET_EN": "Public Restroom",
+            "DATASET_TC": "公廁",
+            "ADDRESS_EN": "Kai Tak Sports Park Public Restroom",
+            "ADDRESS_TC": "啟德體育園公廁",
+            "SEARCH02_EN": "Public Restroom",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.2078200203164,
+              22.313923602812718
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Public Restroom",
+            "POI_TYPE_TC": "公廁",
+            "DATASET_EN": "Public Restroom",
+            "DATASET_TC": "公廁",
+            "ADDRESS_EN": "Kai Tak Promenade Public Toilet",
+            "ADDRESS_TC": "啟德海濱花園公廁",
+            "SEARCH02_EN": "Public Restroom",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.19974775933359,
+              22.31783726391352
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Water Dispenser",
+            "POI_TYPE_TC": "飲水機",
+            "DATASET_EN": "Water Dispenser",
+            "DATASET_TC": "飲水機",
+            "ADDRESS_EN": "Kai Tak Promenade Water Dispensers",
+            "ADDRESS_TC": "啟德海濱花園飲水機",
+            "SEARCH02_EN": "Water Dispenser Location",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.20039547699567,
+              22.32100582654063
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Public Restroom",
+            "POI_TYPE_TC": "公廁",
+            "DATASET_EN": "Public Restroom",
+            "DATASET_TC": "公廁",
+            "ADDRESS_EN": "Shing Fung Road Park Public Restroom",
+            "ADDRESS_TC": "承豐道公園公廁",
+            "SEARCH02_EN": "Public Restroom",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.20056536228641,
+              22.319827152517945
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Water Dispenser",
+            "POI_TYPE_TC": "飲水機",
+            "DATASET_EN": "Water Dispenser",
+            "DATASET_TC": "飲水機",
+            "ADDRESS_EN": "Shing Fung Road Park Water Dispensers",
+            "ADDRESS_TC": "承豐道公園飲水機2",
+            "SEARCH02_EN": "Water Dispenser Location",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.20579910347466,
+              22.31551039124361
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Water Dispenser",
+            "POI_TYPE_TC": "飲水機",
+            "DATASET_EN": "Water Dispenser",
+            "DATASET_TC": "飲水機",
+            "ADDRESS_EN": "KT Marina (Front Gate) Water Dispensers",
+            "ADDRESS_TC": "啟德海灣屋苑門口飲水機",
+            "SEARCH02_EN": "Water Dispenser Location",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.20968879154939,
+              22.314796059118254
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Public Restroom",
+            "POI_TYPE_TC": "公廁",
+            "DATASET_EN": "Public Restroom",
+            "DATASET_TC": "公廁",
+            "ADDRESS_EN": "Kai Tak Promenade Public Toilet",
+            "ADDRESS_TC": "啟德海濱公園公廁",
+            "SEARCH02_EN": "Public Restroom",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.20948879154939,
+              22.314795059118254
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Water Dispensers",
+            "POI_TYPE_TC": "飲水機",
+            "DATASET_EN": "Water Dispensers",
+            "DATASET_TC": "飲水機",
+            "ADDRESS_EN": "Kai Tak Promenade Water Dispensers",
+            "ADDRESS_TC": "啟德海濱公園飲水機",
+            "SEARCH02_EN": "Water Dispenser Location",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              114.19866603820448,
+              22.319415755773033
+            ]
+          },
+          "properties": {
+            "POI_TYPE_EN": "Water Dispenser",
+            "POI_TYPE_TC": "飲水機",
+            "DATASET_EN": "Water Dispenser",
+            "DATASET_TC": "飲水機",
+            "ADDRESS_EN": "Kai Tak Promenade Water (Towards Kowloon City Pier) Dispensers",
+            "ADDRESS_TC": "啟德海濱花園(向九龍城碼頭)飲水機",
+            "SEARCH02_EN": "Water Dispenser Location",
+            "DISTRICT_EN": "Kowloon City",
+            "DISTRICT_TC": "九龍城"
+          }
         },
         {
             "type": "Feature",
