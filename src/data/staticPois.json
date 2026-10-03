@@ -7110,7 +7110,6 @@
                 ]
             },
             "properties": {
-                "OBJECTID": 214,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
                 "DATASET_EN": "Water Dispenser",
@@ -7119,7 +7118,8 @@
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (自由空間/中央草坪)",
                 "SEARCH02_EN": "Water Dispenser Location",
                 "DISTRICT_EN": "Yau Tsim Mong",
-                "DISTRICT_TC": "油尖旺"
+                "DISTRICT_TC": "油尖旺",
+                "OBJECTID": 1300
             }
         },
         {
@@ -7132,7 +7132,6 @@
                 ]
             },
             "properties": {
-                "OBJECTID": 215,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
                 "DATASET_EN": "Water Dispenser",
@@ -7141,7 +7140,8 @@
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (海濱長廊西面)",
                 "SEARCH02_EN": "Water Dispenser Location",
                 "DISTRICT_EN": "Yau Tsim Mong",
-                "DISTRICT_TC": "油尖旺"
+                "DISTRICT_TC": "油尖旺",
+                "OBJECTID": 1331
             }
         },
         {
@@ -7154,7 +7154,6 @@
                 ]
             },
             "properties": {
-                "OBJECTID": 216,
                 "POI_TYPE_EN": "Water Dispenser",
                 "POI_TYPE_TC": "飲水機",
                 "DATASET_EN": "Water Dispenser",
@@ -7163,7 +7162,8 @@
                 "ADDRESS_EN": "West Kowloon Cultural District - Art Park (M+ / Museum Approach)",
                 "ADDRESS_TC": "西九文化區 - 藝術公園 (M+ / 博物館道)",
                 "DISTRICT_EN": "Yau Tsim Mong",
-                "DISTRICT_TC": "油尖旺"
+                "DISTRICT_TC": "油尖旺",
+                "OBJECTID": 1332
             }
         },
         {
@@ -7184,7 +7184,8 @@
             "ADDRESS_TC": "西九文化區公廁",
             "SEARCH02_EN": "Public Restroom",
             "DISTRICT_EN": "Yau Tsim Mong",
-            "DISTRICT_TC": "油尖旺"
+            "DISTRICT_TC": "油尖旺",
+            "OBJECTID": 1333
           }
         },
         {
@@ -7205,7 +7206,8 @@
             "ADDRESS_TC": "啟德體育園公廁",
             "SEARCH02_EN": "Public Restroom",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1334
           }
         },
         {
@@ -7222,11 +7224,12 @@
             "POI_TYPE_TC": "公廁",
             "DATASET_EN": "Public Restroom",
             "DATASET_TC": "公廁",
-            "ADDRESS_EN": "Kai Tak Promenade Public Toilet",
+            "ADDRESS_EN": "Kai Tak Promenade Public Restroom",
             "ADDRESS_TC": "啟德海濱花園公廁",
             "SEARCH02_EN": "Public Restroom",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1335
           }
         },
         {
@@ -7247,7 +7250,8 @@
             "ADDRESS_TC": "啟德海濱花園飲水機",
             "SEARCH02_EN": "Water Dispenser Location",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1336
           }
         },
         {
@@ -7268,7 +7272,8 @@
             "ADDRESS_TC": "承豐道公園公廁",
             "SEARCH02_EN": "Public Restroom",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1337
           }
         },
         {
@@ -7289,7 +7294,8 @@
             "ADDRESS_TC": "承豐道公園飲水機2",
             "SEARCH02_EN": "Water Dispenser Location",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1338
           }
         },
         {
@@ -7310,7 +7316,8 @@
             "ADDRESS_TC": "啟德海灣屋苑門口飲水機",
             "SEARCH02_EN": "Water Dispenser Location",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1339
           }
         },
         {
@@ -7331,7 +7338,8 @@
             "ADDRESS_TC": "啟德海濱公園公廁",
             "SEARCH02_EN": "Public Restroom",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1340
           }
         },
         {
@@ -7352,7 +7360,8 @@
             "ADDRESS_TC": "啟德海濱公園飲水機",
             "SEARCH02_EN": "Water Dispenser Location",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1341
           }
         },
         {
@@ -7373,7 +7382,8 @@
             "ADDRESS_TC": "啟德海濱花園(向九龍城碼頭)飲水機",
             "SEARCH02_EN": "Water Dispenser Location",
             "DISTRICT_EN": "Kowloon City",
-            "DISTRICT_TC": "九龍城"
+            "DISTRICT_TC": "九龍城",
+            "OBJECTID": 1342
           }
         },
         {
