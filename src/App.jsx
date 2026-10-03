@@ -55,7 +55,10 @@ export default function App() {
     setPoiList(pois);
   }, []);
 
-  const isBottomDetailsOpen = sheetSnap !== 'collapsed' && sheetSnap !== 'peek';
+  // ── FIX 1: Updated to recognize the new 'hidden' snap ────────────────────
+  // The sheet is only considered "open" when it's at half or full. Collapsed,
+  // hidden, and the legacy 'peek' value are all treated as "not open".
+  const isBottomDetailsOpen = sheetSnap === 'half' || sheetSnap === 'full';
 
   useEffect(() => {
     if (localStorage.getItem('intervals_connected') === 'true') {
@@ -235,7 +238,14 @@ export default function App() {
                 flyTarget={flyTarget}
                 isCollapsed={isBottomDetailsOpen}
             >
-              <POILayer poiList={poiList} activeCategories={activeCategories} />
+              {/* ── FIX 2: keyed POILayer forces a clean remount when the
+                  active category set changes. This prevents react-leaflet
+                  from leaving stale markers on the map when filters toggle. */}
+              <POILayer
+                  key={activeCategories.join(',')}
+                  poiList={poiList}
+                  activeCategories={activeCategories}
+              />
             </MapView>
 
             {/* Top Control Stack (Search Bar, Controls, & Filter Pills) */}

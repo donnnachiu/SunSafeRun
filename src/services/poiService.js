@@ -34,18 +34,28 @@ export function fetchRunnerPOIs() {
                 poiTypeEn.includes('restroom') ||
                 poiTypeEn.includes('toilet');
 
-            // If it's neither water nor restroom, you can either skip it or assign a null category so it won't match toggles
+            // Assign a category, or skip if it's neither water nor restroom
             let category = null;
             if (isWater) {
                 category = POI_CATEGORIES.WATER.id;
             } else if (isRestroom) {
                 category = POI_CATEGORIES.RESTROOM.id;
             } else {
-                return null; // Ignore non-water/non-restroom items so they don't pollute the map
+                return null; // Ignore non-water/non-restroom items
             }
 
             return {
-                id: `poi-${props.OBJECTID || index}`,
+                // ✅ FIX: use array index for guaranteed-unique React keys.
+                // OBJECTID is unreliable because the source data (and manual
+                // additions) contains duplicate OBJECTID values, which causes
+                // React key collisions and prevents markers from unmounting
+                // correctly when filters toggle.
+                id: `poi-${index}`,
+
+                // Keep the original OBJECTID for debugging/reference only.
+                // Not used as a React key.
+                objectId: props.OBJECTID ?? null,
+
                 lat: parseFloat(latitude),
                 lng: parseFloat(longitude),
                 category,
