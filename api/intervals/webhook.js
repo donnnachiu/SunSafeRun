@@ -50,10 +50,18 @@ async function handleActivityEvent(event) {
         return;
     }
 
-    let accessToken = await kv.get(`intervals_token:${athleteId}`);
+    let accessToken = null;
+    try {
+        console.log(`Attempting to fetch token for key: intervals_token:${athleteId}`);
+        accessToken = await kv.get(`intervals_token:${athleteId}`);
+        console.log('KV get result found:', accessToken ? 'Yes (Token exists)' : 'No (Token is null/undefined)');
+    } catch (kvErr) {
+        console.error('KV get error:', kvErr);
+    }
+
     if (!accessToken) {
-        accessToken = process.env.INTERVALS_API_KEY; // Fallback for testing
-        console.log('Using fallback INTERVALS_API_KEY from environment');
+        accessToken = process.env.INTERVALS_API_KEY;
+        console.log('Using fallback INTERVALS_API_KEY from environment:', accessToken ? 'Available' : 'Missing');
     }
 
     if (!accessToken) {
