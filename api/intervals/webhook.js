@@ -63,7 +63,7 @@ async function handleActivityEvent(event) {
     const activity = await activityRes.json();
     const description = activity.description || '';
 
-    if (description.includes('SunSafeRun') && !description.includes('☀️ Sun Safe Run Stats')) {
+    if (!description.includes('☀️ Sun Safe Run Stats')) {
         const updatedDescription = `${description}\n\n☀️ Sun Safe Run Stats: Route successfully optimized for minimal UV exposure.`.trim();
 
         await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
