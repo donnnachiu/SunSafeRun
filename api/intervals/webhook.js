@@ -1,5 +1,10 @@
 // api/intervals/webhook.js
 import { kv } from '@vercel/kv';
+import { waitUntil } from '@vercel/functions';
+
+export const config = {
+    maxDuration: 60
+};
 
 const WEBHOOK_SECRET = process.env.INTERVALS_WEBHOOK_SECRET;
 
@@ -24,14 +29,16 @@ export default async function handler(req, res) {
 
     const event = req.body || {};
 
-    // Respond 200 immediately to prevent timeouts from Intervals.icu
-    res.status(200).json({ ok: true });
+    // Respond 200 immediately, but keep the function alive long enough
+    // for the background work to finish (Vercel freezes the function
+    // the moment the response is flushed unless we use waitUntil).
+    waitUntil(
+        handleActivityEvent(event).catch(err =>
+            console.error('Webhook background processing error:', err)
+        )
+    );
 
-    try {
-        await handleActivityEvent(event);
-    } catch (err) {
-        console.error('Webhook background processing error:', err);
-    }
+    return res.status(200).json({ ok: true });
 }
 
 async function handleActivityEvent(event) {
@@ -57,7 +64,7 @@ async function handleActivityEvent(event) {
     if (!accessToken) {
         try {
             console.log(`Attempting to fetch token from KV for key: intervals_token:${athleteId}`);
-            accessToken = await kv.get(`intervals_token:${athleteId}`);
+            accessToken = await kvGetWithTimeout(`intervals_token:${athleteId}`);
         } catch (kvErr) {
             console.error('KV get error:', kvErr);
         }
@@ -100,4 +107,11 @@ async function handleActivityEvent(event) {
     } else {
         console.log('Description already contains Sun Safe Run Stats.');
     }
+}
+
+async function kvGetWithTimeout(key, ms = 2000) {
+    return Promise.race([
+        kv.get(key),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('KV timeout')), ms))
+    ]);
 }
