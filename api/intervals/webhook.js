@@ -35,17 +35,25 @@ export default async function handler(req, res) {
 }
 
 async function handleActivityEvent(event) {
+    console.log('Handling event type:', event.type);
     if (event.type !== 'ACTIVITY_UPLOADED' && event.type !== 'ACTIVITY_UPDATED') {
+        console.log('Ignored event type:', event.type);
         return;
     }
 
     const activityId = event.id || event.activity_id;
     const athleteId = event.athlete_id;
-    if (!activityId || !athleteId) return;
+    console.log('Extracted activityId:', activityId, 'athleteId:', athleteId);
+
+    if (!activityId || !athleteId) {
+        console.log('Missing activityId or athleteId');
+        return;
+    }
 
     let accessToken = await kv.get(`intervals_token:${athleteId}`);
     if (!accessToken) {
         accessToken = process.env.INTERVALS_API_KEY; // Fallback for testing
+        console.log('Using fallback INTERVALS_API_KEY from environment');
     }
 
     if (!accessToken) {
@@ -53,12 +61,18 @@ async function handleActivityEvent(event) {
         return;
     }
 
+    console.log(`Fetching activity ${activityId} from Intervals.icu...`);
     const activityRes = await fetch(
         `https://intervals.icu/api/v1/activity/${activityId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
-    if (!activityRes.ok) return;
+    console.log('Intervals fetch response status:', activityRes.status);
+    if (!activityRes.ok) {
+        const errText = await activityRes.text();
+        console.error('Failed to fetch activity from Intervals:', errText);
+        return;
+    }
 
     const activity = await activityRes.json();
     const description = activity.description || '';
@@ -66,7 +80,8 @@ async function handleActivityEvent(event) {
     if (!description.includes('☀️ Sun Safe Run Stats')) {
         const updatedDescription = `${description}\n\n☀️ Sun Safe Run Stats: Route successfully optimized for minimal UV exposure.`.trim();
 
-        await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
+        console.log('Updating activity description on Intervals.icu...');
+        const updateRes = await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
@@ -74,5 +89,8 @@ async function handleActivityEvent(event) {
             },
             body: JSON.stringify({ description: updatedDescription })
         });
+        console.log('Update response status:', updateRes.status);
+    } else {
+        console.log('Description already contains Sun Safe Run Stats.');
     }
 }
