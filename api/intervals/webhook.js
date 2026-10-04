@@ -53,21 +53,23 @@ async function handleActivityEvent(event) {
         return;
     }
 
-    // Use fallback environment variable first to prevent KV hanging issues during testing
-    let accessToken = process.env.INTERVALS_API_KEY;
-    console.log('Using INTERVALS_API_KEY from environment:', accessToken ? 'Available' : 'Missing');
+    // Multi-athlete: look up the per-athlete token in KV first.
+    let accessToken = null;
+    try {
+        console.log(`Fetching token from KV for key: intervals_token:${athleteId}`);
+        accessToken = await kvGetWithTimeout(`intervals_token:${athleteId}`);
+    } catch (kvErr) {
+        console.error('KV get error:', kvErr);
+    }
 
-    if (!accessToken) {
-        try {
-            console.log(`Attempting to fetch token from KV for key: intervals_token:${athleteId}`);
-            accessToken = await kvGetWithTimeout(`intervals_token:${athleteId}`);
-        } catch (kvErr) {
-            console.error('KV get error:', kvErr);
-        }
+    // Dev-only fallback to a personal API key (never used in production).
+    if (!accessToken && process.env.NODE_ENV !== 'production') {
+        accessToken = process.env.INTERVALS_API_KEY;
+        console.log('Dev fallback to INTERVALS_API_KEY:', accessToken ? 'Available' : 'Missing');
     }
 
     if (!accessToken) {
-        console.error(`No access token available for athlete ${athleteId}`);
+        console.error(`No access token available for athlete ${athleteId}. Athlete must reconnect via /api/intervals/auth.`);
         return;
     }
 
