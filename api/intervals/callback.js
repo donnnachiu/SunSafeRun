@@ -14,6 +14,7 @@ export default async function handler(req, res) {
     }
 
     try {
+        // 1. Exchange authorization code for access token
         const tokenResponse = await fetch('https://intervals.icu/api/oauth/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -27,22 +28,39 @@ export default async function handler(req, res) {
         });
 
         if (!tokenResponse.ok) {
-            return res.send(`<script>window.close();</script>`);
+            const errText = await tokenResponse.text();
+            console.error('OAuth token exchange failed:', tokenResponse.status, errText);
+            return res.status(tokenResponse.status).send(`Token exchange failed: ${tokenResponse.status}`);
         }
 
         const data = await tokenResponse.json();
+        console.log('Token exchange successful, fetching athlete profile...');
 
-        // Fetch the athlete's ID using their new token
+        // 2. Fetch the athlete's ID using the new token
         const athleteRes = await fetch('https://intervals.icu/api/v1/athlete/0', {
             headers: { Authorization: `Bearer ${data.access_token}` }
         });
-        const athleteData = await athleteRes.json();
-        const athleteId = athleteData.id;
 
-        // Save token to Vercel KV database
+        if (!athleteRes.ok) {
+            const errText = await athleteRes.text();
+            console.error('Failed to fetch athlete:', athleteRes.status, errText);
+            return res.status(500).send(`Athlete fetch failed: ${athleteRes.status}. Check SETTINGS:READ scope.`);
+        }
+
+        const athleteData = await athleteRes.json();
+        const athleteId = athleteData.id || athleteData.athlete?.id;
+
+        if (!athleteId) {
+            console.error('Athlete response missing id. Full response:', JSON.stringify(athleteData));
+            return res.status(500).send('Athlete ID missing from Intervals response. See server logs.');
+        }
+
+        console.log(`Storing token for athlete ${athleteId}`);
+
+        // 3. Save token to Vercel KV keyed by athlete ID
         await kv.set(`intervals_token:${athleteId}`, data.access_token);
 
-        // Set HttpOnly cookie for frontend actions
+        // 4. Set HttpOnly cookie for frontend actions
         res.setHeader(
             'Set-Cookie',
             `intervals_token=${data.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
@@ -52,7 +70,7 @@ export default async function handler(req, res) {
             <html>
                 <head><title>Connected</title></head>
                 <body>
-                    <p>Connected to SunSafeRun successfully!</p>
+                    <p>Connected to SunSafeRun successfully as athlete ${athleteId}!</p>
                     <script>
                         if (window.opener) {
                             window.opener.postMessage({ type: 'INTERVALS_AUTH_SUCCESS' }, '*');
@@ -66,6 +84,6 @@ export default async function handler(req, res) {
         `);
     } catch (err) {
         console.error('OAuth Callback Error:', err);
-        return res.send(`<script>window.close();</script>`);
+        return res.status(500).send('OAuth callback error. See server logs.');
     }
 }
