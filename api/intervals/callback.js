@@ -1,4 +1,6 @@
 // api/intervals/callback.js
+import { kv } from '@vercel/kv';
+
 export default async function handler(req, res) {
     const { code } = req.query;
     const clientId = process.env.INTERVALS_CLIENT_ID;
@@ -8,16 +10,7 @@ export default async function handler(req, res) {
         : 'https://sun-safe-run.vercel.app/api/intervals/callback';
 
     if (!code) {
-        return res.send(`
-            <script>
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'no_code' }, '*');
-                    window.close();
-                } else {
-                    window.location.href = '/?error=no_code';
-                }
-            </script>
-        `);
+        return res.send(`<script>window.close();</script>`);
     }
 
     try {
@@ -34,32 +27,32 @@ export default async function handler(req, res) {
         });
 
         if (!tokenResponse.ok) {
-            return res.send(`
-                <script>
-                    if (window.opener) {
-                        window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'token_exchange_failed' }, '*');
-                        window.close();
-                    } else {
-                        window.location.href = '/?error=token_exchange_failed';
-                    }
-                </script>
-            `);
+            return res.send(`<script>window.close();</script>`);
         }
 
         const data = await tokenResponse.json();
 
-        if (data?.access_token) {
-            res.setHeader(
-                'Set-Cookie',
-                `intervals_token=${data.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
-            );
-        }
+        // Fetch the athlete's ID using their new token
+        const athleteRes = await fetch('https://intervals.icu/api/v1/athlete/0', {
+            headers: { Authorization: `Bearer ${data.access_token}` }
+        });
+        const athleteData = await athleteRes.json();
+        const athleteId = athleteData.id;
 
-        // Send success message to parent window and close popup
+        // Save token to Vercel KV database
+        await kv.set(`intervals_token:${athleteId}`, data.access_token);
+
+        // Set HttpOnly cookie for frontend actions
+        res.setHeader(
+            'Set-Cookie',
+            `intervals_token=${data.access_token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000`
+        );
+
         return res.send(`
             <html>
+                <head><title>Connected</title></head>
                 <body>
-                    <p>Connecting to SunSafeRun...</p>
+                    <p>Connected to SunSafeRun successfully!</p>
                     <script>
                         if (window.opener) {
                             window.opener.postMessage({ type: 'INTERVALS_AUTH_SUCCESS' }, '*');
@@ -72,15 +65,7 @@ export default async function handler(req, res) {
             </html>
         `);
     } catch (err) {
-        return res.send(`
-            <script>
-                if (window.opener) {
-                    window.opener.postMessage({ type: 'INTERVALS_AUTH_ERROR', error: 'oauth_failed' }, '*');
-                    window.close();
-                } else {
-                    window.location.href = '/?error=oauth_failed';
-                }
-            </script>
-        `);
+        console.error('OAuth Callback Error:', err);
+        return res.send(`<script>window.close();</script>`);
     }
 }

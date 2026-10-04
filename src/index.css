@@ -1,15 +1,21 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-ink: var(--c-ink);
+  --color-surface: var(--c-surface);
+  --color-surface2: var(--c-surface2);
+  --color-line: var(--c-line);
+  --color-paper: var(--c-paper);
+  --color-muted: var(--c-muted);
+  --color-attribution-bg: var(--c-attribution-bg);
+  --font-body: 'Inter', sans-serif;
+}
 
 html, body, #root {
   height: 100%;
 }
 
 /* ---------- Theme variables ---------- */
-/* Night matches the app's original dark palette. Day is a light equivalent.
-   Every component reads bg-ink / text-paper / bg-surface / etc — never a
-   raw hex — so flipping the wrapper class repaints the whole app. */
 :root,
 .theme-night {
   --c-ink: #10151a;
@@ -36,9 +42,7 @@ body {
 }
 
 /* Mobile browsers resize the viewport as address/toolbar chrome shows or
-   hides; 100dvh accounts for that. 100vh is listed first as a fallback for
-   browsers that don't support dvh — an invalid value is ignored, so the
-   vh line still applies there. */
+   hides; 100dvh accounts for that. */
 .app-height {
   height: 100vh;
   height: 100dvh;
@@ -59,6 +63,8 @@ body,
 .leaflet-container {
   background: var(--c-ink);
   font-family: 'Inter', sans-serif;
+  width: 100%;
+  height: 100%;
 }
 
 .leaflet-control-attribution {
@@ -98,8 +104,6 @@ body,
   background: var(--c-line);
   border-radius: 999px;
 }
-
-/* src/index.css */
 
 /* Desaturate map tiles so route colors stand out dramatically */
 .leaflet-tile-pane {
