@@ -2,10 +2,6 @@
 import { kv } from '@vercel/kv';
 import { waitUntil } from '@vercel/functions';
 
-export const config = {
-    maxDuration: 60
-};
-
 const WEBHOOK_SECRET = process.env.INTERVALS_WEBHOOK_SECRET;
 
 export default async function handler(req, res) {
