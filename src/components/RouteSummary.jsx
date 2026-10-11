@@ -71,76 +71,75 @@ export default function RouteSummary({
     };
 
     return (
-        <div className="mt-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-800 text-sm">Export Route</h3>
+        <div className="mt-4 p-5 bg-white rounded-2xl shadow-sm border border-orange-100">
+            <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900 text-base">Export to Watch & Strava</h3>
+                <span className="text-[11px] font-medium bg-orange-50 text-orange-700 px-2 py-0.5 rounded-full">
+                    Automatic Sync Loop
+                </span>
+            </div>
 
             {!isConnectedToGarmin ? (
-                /* Disconnected State: Setup Instructions */
-                <div className="mt-3 space-y-3">
-                    <div className="p-3 bg-amber-50/90 border border-amber-200/70 rounded-lg text-xs text-amber-900 leading-relaxed">
-                        <p className="font-semibold text-amber-950 mb-1 flex items-center gap-1.5">
-                            <svg className="w-4 h-4 fill-current text-amber-600 shrink-0" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                            One-Time Garmin Setup Required
+                /* Disconnected State: Clear Multi-App Setup Guide */
+                <div className="space-y-3.5">
+                    <div className="p-3.5 bg-orange-50/70 border border-orange-200/60 rounded-xl text-xs text-orange-950 leading-relaxed">
+                        <p className="font-bold text-orange-900 mb-1.5 flex items-center gap-1.5">
+                            <span className="text-sm">🛡️</span> One-Time Account Setup
+                        </p>
+                        <p className="text-[11px] text-orange-900/90 mb-2.5">
+                            SunSafeRun automatically pushes workouts to your watch and syncs your UV savings stats directly to Strava via <strong>Intervals.icu</strong>.
                         </p>
 
-                        <p className="mb-2 text-[11px] text-amber-900">
-                            SunSafeRun pushes workouts to Garmin via <strong>Intervals.icu</strong> (a trusted endurance platform).
-                        </p>
-
-                        <div className="p-2 bg-white/70 rounded border border-amber-200/50 mb-2.5 text-[11px] space-y-1.5">
-                            <p className="font-medium text-amber-950">📋 Setup Steps (~1–2 mins):</p>
-                            <ol className="list-decimal pl-4 text-amber-900 space-y-1">
+                        <div className="p-2.5 bg-white/80 rounded-lg border border-orange-200/50 text-[11px] space-y-2">
+                            <p className="font-semibold text-gray-900">📋 Follow these quick steps:</p>
+                            <ol className="list-decimal pl-4 text-gray-700 space-y-1.5">
                                 <li>
                                     Log in or register at{' '}
                                     <a
                                         href="https://intervals.icu/settings"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="font-semibold underline text-amber-950 hover:text-amber-700"
+                                        className="font-semibold underline text-orange-600 hover:text-orange-700"
                                     >
                                         Intervals.icu Settings
                                     </a>.
                                 </li>
                                 <li>
-                                    Click the <strong className="text-amber-950">CONNECTIONS</strong> tab at the top.
+                                    Go to the <strong className="text-gray-900">CONNECTIONS</strong> tab to connect your <strong>Garmin</strong> (enable <em className="text-gray-900">"Upload planned workouts"</em>) and your <strong>Strava</strong> account (standard free connect).
                                 </li>
-                                <li>
-                                    Under <strong className="text-amber-950">Garmin Connect</strong>, enable <em className="font-semibold text-amber-950">"Upload planned workouts"</em>.
-                                </li>
-                                <li>Return here and authorize SunSafeRun.</li>
+                                <li>Return here and authorize SunSafeRun below.</li>
                             </ol>
                         </div>
                     </div>
 
                     <button
                         onClick={handleConnect}
-                        className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-medium py-2.5 px-4 rounded-md transition-colors cursor-pointer text-xs shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 text-white font-semibold py-3 px-4 rounded-xl transition-all shadow-md shadow-orange-600/20 text-xs cursor-pointer"
                     >
                         <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                            <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
                         </svg>
-                        Connect Intervals.icu to Sync Watch
+                        Connect Intervals.icu to Get Started
                     </button>
                 </div>
             ) : (
-                /* Connected State: Explicit Garmin Link Notice + Sync Button */
-                <div className="mt-3 space-y-2">
-                    <div className="p-2.5 bg-blue-50/80 border border-blue-200/80 rounded-md text-[11px] text-blue-900 flex items-start gap-2">
-                        <span className="text-blue-600 text-sm shrink-0">💡</span>
-                        <div>
-                            <p className="font-semibold text-blue-950 mb-0.5">Watch not updating?</p>
-                            <p className="leading-snug text-blue-800">
-                                Open{' '}
+                /* Connected State: Sync Action & Health Check */
+                <div className="space-y-3">
+                    <div className="p-3 bg-blue-50/80 border border-blue-200/70 rounded-xl text-[11px] text-blue-900 flex items-start gap-2.5">
+                        <span className="text-blue-600 text-base shrink-0 pt-0.5">💡</span>
+                        <div className="space-y-1">
+                            <p className="font-semibold text-blue-950">Seamless Post-Run Sync Active</p>
+                            <p className="text-blue-800 leading-relaxed">
+                                Once finished, your run stats and UV protection breakdown will automatically update on Intervals.icu and mirror over to <strong>Strava</strong>. Ensure{' '}
                                 <a
                                     href="https://intervals.icu/settings"
                                     target="_blank"
                                     rel="noreferrer"
                                     className="font-semibold underline text-blue-950 hover:text-blue-700"
                                 >
-                                    Intervals.icu Settings
-                                </a>, go to the <strong>CONNECTIONS</strong> tab, and ensure <em>"Upload planned workouts"</em> under Garmin Connect is checked.
+                                    Intervals CONNECTIONS
+                                </a>{' '}
+                                has planned workouts and Strava linked.
                             </p>
                         </div>
                     </div>
@@ -148,7 +147,7 @@ export default function RouteSummary({
                     <button
                         onClick={handleSyncToGarmin}
                         disabled={syncing || !totalDistance || totalDistance <= 0}
-                        className="w-full flex items-center justify-center gap-2 bg-[#007CC3] hover:bg-[#00639C] text-white font-medium py-2.5 px-4 rounded-md transition-colors disabled:opacity-50 cursor-pointer text-xs shadow-sm"
+                        className="w-full flex items-center justify-center gap-2 bg-[#007CC3] hover:bg-[#00639C] text-white font-semibold py-3 px-4 rounded-xl transition-all disabled:opacity-50 cursor-pointer text-xs shadow-md shadow-blue-500/20"
                     >
                         <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
@@ -160,32 +159,21 @@ export default function RouteSummary({
 
             {/* Sync Status Notifications */}
             {syncStatus === 'success' && (
-                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md text-xs text-green-800 space-y-1.5">
-                    <p className="font-semibold text-green-900 text-center flex items-center justify-center gap-1">
-                        <span>✓</span> Sent to Intervals.icu Calendar!
+                <div className="mt-3 p-3.5 bg-green-50 border border-green-200 rounded-xl text-xs text-green-800 space-y-1.5 shadow-sm">
+                    <p className="font-bold text-green-900 text-center flex items-center justify-center gap-1.5">
+                        <span>✓</span> Route Sent to Intervals.icu Calendar!
                     </p>
                     <p className="text-[11px] text-green-800 leading-relaxed text-center">
-                        Open your phone's <strong>Garmin Connect app</strong> to sync to your watch.
-                    </p>
-                    <p className="text-[10px] text-green-700 pt-1 border-t border-green-200/60 text-center">
-                        Not on watch? Confirm <em>CONNECTIONS → Upload planned workouts</em> is checked in{' '}
-                        <a
-                            href="https://intervals.icu/settings"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="font-semibold underline hover:text-green-950"
-                        >
-                            Intervals Settings →
-                        </a>
+                        Open your phone's <strong>Garmin Connect app</strong> to sync to your watch. After your run, your UV savings stats will automatically appear on Strava!
                     </p>
                 </div>
             )}
 
             {syncStatus === 'error' && (
-                <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-md text-xs text-red-800 space-y-1">
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-800 space-y-1 shadow-sm">
                     <p className="font-semibold text-red-900 text-center">Failed to sync workout.</p>
                     <p className="text-[11px] text-red-700 text-center">
-                        Check your connection in Intervals.icu settings.
+                        Please check your account connection in Intervals.icu settings.
                     </p>
                     <div className="text-center pt-1">
                         <a
