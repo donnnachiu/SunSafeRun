@@ -17,16 +17,6 @@ html, body, #root {
 
 /* ---------- Theme variables ---------- */
 :root,
-.theme-night {
-  --c-ink: #10151a;
-  --c-surface: #171f26;
-  --c-surface2: #1e2830;
-  --c-line: #2a3640;
-  --c-paper: #edefe9;
-  --c-muted: #8fa0aa;
-  --c-attribution-bg: rgba(16, 21, 26, 0.75);
-}
-
 .theme-day {
   --c-ink: #f7f8fa;
   --c-surface: #ffffff;
@@ -35,6 +25,16 @@ html, body, #root {
   --c-paper: #12161c;
   --c-muted: #5b6472;
   --c-attribution-bg: rgba(255, 255, 255, 0.82);
+}
+
+.theme-night {
+  --c-ink: #10151a;
+  --c-surface: #171f26;
+  --c-surface2: #1e2830;
+  --c-line: #2a3640;
+  --c-paper: #edefe9;
+  --c-muted: #8fa0aa;
+  --c-attribution-bg: rgba(16, 21, 26, 0.75);
 }
 
 body {
