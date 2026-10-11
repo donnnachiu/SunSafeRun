@@ -49,6 +49,7 @@ async function handleActivityEvent(event) {
         return;
     }
 
+    // 1. Fetch completed activity details
     const activityRes = await fetch(
         `https://intervals.icu/api/v1/activity/${activityId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -57,18 +58,53 @@ async function handleActivityEvent(event) {
     if (!activityRes.ok) return;
 
     const activity = await activityRes.json();
-    const description = activity.description || '';
+    const currentDescription = activity.description || '';
 
-    if (!description.includes('☀️ Sun Safe Run Stats')) {
-        const updatedDescription = `${description}\n\n☀️ Sun Safe Run Stats: Route successfully optimized for minimal UV exposure.`.trim();
-
-        await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ description: updatedDescription })
-        });
+    // Avoid duplicate processing if description is already updated
+    if (currentDescription.includes('☀️ SunSafeRun Route') || currentDescription.includes('☀️ Sun Safe Run Stats')) {
+        return;
     }
+
+    // 2. Fetch athlete's calendar events for the activity date to find the planned workout metadata
+    const actDate = activity.start_date_local
+        ? activity.start_date_local.split('T')[0]
+        : new Date().toISOString().split('T')[0];
+
+    let richDescription = '';
+    try {
+        const eventsRes = await fetch(
+            `https://intervals.icu/api/v1/athlete/${athleteId}/events?oldest=${actDate}&newest=${actDate}`,
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+
+        if (eventsRes.ok) {
+            const events = await eventsRes.json();
+            // Find the planned SunSafeRun workout on that day
+            const plannedWorkout = events.find(
+                e => e.category === 'WORKOUT' && e.description && e.description.includes('SunSafeRun')
+            );
+            if (plannedWorkout) {
+                richDescription = plannedWorkout.description;
+            }
+        }
+    } catch (err) {
+        console.error('Error fetching calendar events for webhook:', err);
+    }
+
+    // 3. Fallback if no matching planned workout description was found
+    if (!richDescription) {
+        richDescription = `☀️ SunSafeRun Stats:\n🛡️ Route successfully optimized for minimal UV exposure.`;
+    }
+
+    const finalDescription = `${currentDescription}\n\n${richDescription}`.trim();
+
+    // 4. Push the updated description back to Intervals.icu
+    await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ description: finalDescription })
+    });
 }
