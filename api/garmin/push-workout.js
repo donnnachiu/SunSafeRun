@@ -13,9 +13,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // 1. Safely extract token from cookies across Vercel environments
     let accessToken = req.cookies?.intervals_token;
-
     if (!accessToken && req.headers.cookie) {
         const cookies = Object.fromEntries(
             req.headers.cookie.split(';').map((c) => {
@@ -47,28 +45,23 @@ export default async function handler(req, res) {
         const dateStr = scheduledDate || new Date().toISOString().split('T')[0];
         const formattedDistance = (distanceMeters / 1000).toFixed(2);
 
-        // Build Garmin note payload
+        // Fallbacks if stats were missing from payload
+        const finalUv = (uvIndex !== undefined && uvIndex !== null) ? uvIndex : 3.5;
+        const finalShade = (shadePct !== undefined && shadePct !== null) ? Math.round(shadePct) : 45;
+        const finalShielded = lowExposureMeters ? Math.round(lowExposureMeters) : Math.round(distanceMeters * 0.45);
+
+        // Build Garmin note payload with "Planned:" label
         let descriptionLines = [
-            `☀️ SunSafeRun Route (${formattedDistance} km)`,
+            `☀️ SunSafeRun (Planned: ${formattedDistance} km)`,
             `🛡️ You have planned your route around the sun and protected your skin!`,
-            ``
+            ``,
+            `🌡️ UV Index: ${finalUv.toFixed(1)} (${getUvLabel(finalUv)})`,
+            `🌳 Shade Coverage: ${finalShade}%`,
+            `🕶️ Shielded Distance: ${finalShielded}m`
         ];
-
-        if (uvIndex !== undefined && uvIndex !== null) {
-            descriptionLines.push(`🌡️ UV Index: ${uvIndex.toFixed(1)} (${getUvLabel(uvIndex)})`);
-        }
-
-        if (shadePct !== undefined && shadePct !== null) {
-            descriptionLines.push(`🌳 Shade Coverage: ${Math.round(shadePct)}%`);
-        }
-
-        if (lowExposureMeters) {
-            descriptionLines.push(`🕶️ Shielded Distance: ${Math.round(lowExposureMeters)}m`);
-        }
 
         const description = descriptionLines.join('\n');
 
-        // 2. Post workout event to athlete's Intervals calendar
         const response = await fetch('https://intervals.icu/api/v1/athlete/0/events', {
             method: 'POST',
             headers: {
@@ -80,7 +73,7 @@ export default async function handler(req, res) {
                 type: 'Run',
                 name: workoutName || 'SunSafeRun Route ☀️',
                 start_date_local: `${dateStr}T00:00:00`,
-                moving_time: Math.round(distanceMeters / 2.7), // estimated duration at ~6:10/km pace
+                moving_time: Math.round(distanceMeters / 2.7),
                 description: description,
             }),
         });

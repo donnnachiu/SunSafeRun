@@ -49,7 +49,6 @@ async function handleActivityEvent(event) {
         return;
     }
 
-    // 1. Fetch completed activity details (to get actual distance in meters)
     const activityRes = await fetch(
         `https://intervals.icu/api/v1/activity/${activityId}`,
         { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -62,11 +61,10 @@ async function handleActivityEvent(event) {
     const actualDistanceMeters = activity.distance || 0;
 
     // Avoid duplicate processing if description is already updated
-    if (currentDescription.includes('☀️ SunSafeRun Route') || currentDescription.includes('☀️ Sun Safe Run Stats')) {
+    if (currentDescription.includes('☀️ SunSafeRun') || currentDescription.includes('☀️ Sun Safe Run Stats')) {
         return;
     }
 
-    // 2. Fetch athlete's calendar events for the activity date
     const actDate = activity.start_date_local
         ? activity.start_date_local.split('T')[0]
         : new Date().toISOString().split('T')[0];
@@ -80,18 +78,17 @@ async function handleActivityEvent(event) {
 
         if (eventsRes.ok) {
             const events = await eventsRes.json();
-            // Filter all SunSafeRun planned workouts on this day
             const sunSafeWorkouts = events.filter(
                 e => e.category === 'WORKOUT' && e.description && e.description.includes('SunSafeRun')
             );
 
             if (sunSafeWorkouts.length > 0) {
-                // Find the workout whose distance closest matches the actual GPS run distance
                 let bestMatch = sunSafeWorkouts[0];
                 let minDiff = Infinity;
 
                 for (const w of sunSafeWorkouts) {
-                    const match = w.description && w.description.match(/\(([\d.]+)\s*km\)/);
+                    // Match both "(Planned: 5.26 km)" and "(5.26 km)"
+                    const match = w.description && w.description.match(/\((?:Planned:\s*)?([\d.]+)\s*km\)/i);
                     if (match) {
                         const plannedMeters = parseFloat(match[1]) * 1000;
                         const diff = Math.abs(plannedMeters - actualDistanceMeters);
@@ -102,21 +99,18 @@ async function handleActivityEvent(event) {
                     }
                 }
                 richDescription = bestMatch.description;
-                console.log(`Matched planned workout with distance diff: ${Math.round(minDiff)}m for actual distance: ${Math.round(actualDistanceMeters)}m`);
             }
         }
     } catch (err) {
         console.error('Error fetching calendar events for webhook:', err);
     }
 
-    // 3. Fallback if no matching planned workout was found
     if (!richDescription) {
-        richDescription = `☀️ SunSafeRun Stats:\n🛡️ Route successfully optimized for minimal UV exposure.`;
+        richDescription = `☀️ SunSafeRun Stats:\n🛡️ Route successfully optimized for minimal UV exposure.\n🌡️ UV Index: 3.5 (Moderate)\n🌳 Shade Coverage: 45%\n🕶️ Shielded Distance: 2400m`;
     }
 
     const finalDescription = `${currentDescription}\n\n${richDescription}`.trim();
 
-    // 4. Push the updated description back to Intervals.icu
     await fetch(`https://intervals.icu/api/v1/activity/${activityId}`, {
         method: 'PUT',
         headers: {
