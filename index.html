@@ -1,27 +1,57 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SunSafeRun — Plan your route around the sun</title>
-    <meta name="description" content="Visualize sun exposure along your running route at any time of day, so you can plan runs that don't burn you." />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+  <!-- Primary SEO Meta Tags -->
+  <title>SunSafeRun — Plan Shaded Running Routes in Hong Kong</title>
+  <meta name="description" content="Visualize sun exposure, 3D building shadows, and UV index along your running route in real-time. Check LCSD sports ground availability across Hong Kong." />
+  <meta name="keywords" content="SunSafeRun, Hong Kong running, shaded running routes, UV index runner, LCSD sports ground timetable, running track availability, heat stroke avoidance" />
+  <meta name="author" content="SunSafeRun" />
 
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-  </head>
-  <body class="bg-ink">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.sunsaferun.com/" />
+  <meta property="og:title" content="SunSafeRun — Plan Shaded Running Routes" />
+  <meta property="og:description" content="Plan runs around the sun with real-time 3D building shadow vector calculation and Hong Kong LCSD track status." />
+  <meta property="og:image" content="https://www.sunsaferun.com/og-image.png" />
+
+  <!-- Twitter Card -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://www.sunsaferun.com/" />
+  <meta property="twitter:title" content="SunSafeRun — Plan Shaded Running Routes" />
+  <meta property="twitter:description" content="Visualize sun exposure, 3D building shadows, and UV index along your running route in real-time." />
+  <meta property="twitter:image" content="https://www.sunsaferun.com/og-image.png" />
+
+  <!-- Google Analytics (GA4) -->
+  <!-- REPLACE G-XXXXXXXXXX WITH YOUR MEASUREMENT ID -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX');
+  </script>
+
+  <!-- Typography Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+  />
+
+  <!-- Leaflet CSS -->
+  <link
+          rel="stylesheet"
+          href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""
+  />
+</head>
+<body class="bg-ink">
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+</body>
 </html>
