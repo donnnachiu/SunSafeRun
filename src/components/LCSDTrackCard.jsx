@@ -21,26 +21,23 @@ export function LCSDTrackCard() {
 
     useEffect(() => {
         setLoading(true);
+
+        // Calls your Vercel serverless API route (/api/tracks.js)
         fetch(`/api/tracks?venueId=${selectedTrack}&date=${targetDateStr}`)
             .then((res) => {
-                if (!res.ok) throw new Error('No data');
+                if (!res.ok) {
+                    throw new Error('Schedule not found in database');
+                }
                 return res.json();
             })
             .then((data) => {
                 setSchedule(data);
                 setLoading(false);
             })
-            .catch(() => {
-                // Fallback demo state broken down into 5 granular time blocks
-                setSchedule({
-                    slots: [
-                        { time: '06:10 - 10:00', isOpen: true },
-                        { time: '10:00 - 16:00', isOpen: false },
-                        { time: '16:00 - 18:00', isOpen: true },
-                        { time: '18:00 - 20:30', isOpen: true },
-                        { time: '20:30 - 22:30', isOpen: true }
-                    ]
-                });
+            .catch((err) => {
+                console.warn('API notice:', err.message);
+                // If data isn't in KV yet, show null (or a clean empty state) instead of fake mock data
+                setSchedule(null);
                 setLoading(false);
             });
     }, [selectedTrack, dayOffset, targetDateStr]);
@@ -128,8 +125,8 @@ export function LCSDTrackCard() {
                     ))}
                 </div>
             ) : (
-                <div className="text-center py-3 text-xs text-slate-400">
-                    No track closures listed for this date.
+                <div className="text-center py-6 text-xs text-slate-400">
+                    No schedule synced in database for this date yet.
                 </div>
             )}
         </div>
