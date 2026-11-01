@@ -7,6 +7,7 @@
     <style>
         :root {
             --primary: #007CC3;
+            --primary-hover: #005FA3;
             --text-main: #1f2937;
             --text-muted: #4b5563;
             --bg-card: #ffffff;
@@ -31,6 +32,32 @@
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid var(--border);
+        }
+
+        .back-nav {
+            margin-bottom: 24px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary);
+            text-decoration: none;
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-back:hover {
+            background-color: #e0f2fe;
+            color: var(--primary-hover);
+            border-color: #7dd3fc;
+            text-decoration: none;
         }
 
         h1 {
@@ -77,13 +104,6 @@
             text-decoration: underline;
         }
 
-        .contact-box {
-            background-color: #f3f4f6;
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-
         @media (max-width: 640px) {
             body { padding: 20px 12px; }
             .container { padding: 24px; }
@@ -93,6 +113,10 @@
 <body>
 
 <div class="container">
+    <div class="back-nav">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+
     <h1>Privacy Policy</h1>
     <div class="date">Effective Date: October 1, 2026</div>
 
@@ -101,35 +125,35 @@
     <h2>1. Information We Process</h2>
     <p>To provide sun-optimized route recommendations and sync workouts to your devices, we process the following types of information:</p>
     <ul>
-        <li><strong>Geolocation & Route Data:</strong> Waypoints, GPS coordinates, and route selections you draw or generate on our map to calculate shade coverage, building height shadows, and solar angles[cite: 7].</li>
-        <li><strong>Connected Account Tokens (Intervals.icu / Garmin):</strong> When you choose to connect your account via OAuth 2.0, we process secure, encrypted authentication tokens to schedule workouts directly to your connected calendar and device[cite: 7].</li>
+        <li><strong>Geolocation & Route Data:</strong> Waypoints, GPS coordinates, and route selections you draw or generate on our map to calculate shade coverage, building height shadows, and solar angles[cite: 15].</li>
+        <li><strong>Connected Account Tokens (Intervals.icu / Garmin):</strong> When you choose to connect your account via OAuth 2.0, we process secure, encrypted authentication tokens to schedule workouts directly to your connected calendar and device[cite: 15].</li>
         <li><strong>Technical Usage Data:</strong> Standard server requests, web browser types, and anonymous interaction metrics required to ensure site functionality and uptime.</li>
     </ul>
 
     <h2>2. How We Use Your Information</h2>
-    <p>We use processed data strictly for the following functional purposes[cite: 7]:</p>
+    <p>We use processed data strictly for the following functional purposes[cite: 15]:</p>
     <ul>
-        <li>Calculating dynamic sun positions, UV indices, and shaded running paths for your selected routes[cite: 7].</li>
-        <li>Pushing scheduled workouts and route structures directly to your third-party account (e.g., Intervals.icu / Garmin Connect) upon your explicit request[cite: 7].</li>
+        <li>Calculating dynamic sun positions, UV indices, and shaded running paths for your selected routes[cite: 15].</li>
+        <li>Pushing scheduled workouts and route structures directly to your third-party account (e.g., Intervals.icu / Garmin Connect) upon your explicit request[cite: 15].</li>
         <li>Ensuring platform security, performance optimization, and bug fixing.</li>
     </ul>
 
     <h2>3. Data Sharing & Third-Party Services</h2>
-    <p>We do not sell, rent, or trade your personal data or route histories to advertisers or third parties[cite: 7]. Data is transmitted securely via HTTPS solely to integrated platform partners that you explicitly connect[cite: 7]:</p>
+    <p>We do not sell, rent, or trade your personal data or route histories to advertisers or third parties[cite: 15]. Data is transmitted securely via HTTPS solely to integrated platform partners that you explicitly connect[cite: 15]:</p>
     <ul>
-        <li><strong>Intervals.icu API:</strong> Used to convert planned run metrics into structured workout events on your personal calendar[cite: 7].</li>
-        <li><strong>Vercel (Hosting Infrastructure):</strong> Used to host our serverless functions securely in accordance with enterprise data protection standards.</li>
+        <li><strong>Intervals.icu API:</strong> Used to convert planned run metrics into structured workout events on your personal calendar[cite: 15].</li>
+        <li><strong>Vercel (Hosting Infrastructure):</strong> Used to host our serverless functions securely in accordance with enterprise data protection standards[cite: 15].</li>
     </ul>
 
     <h2>4. Data Retention & Access Control</h2>
     <p>We believe in minimal data footprint:</p>
     <ul>
         <li>Route coordinates are evaluated dynamically in real time and are not permanently tied to user profile identities.</li>
-        <li>You may revoke SunSafeRun's access to your connected fitness accounts at any time through your third-party account settings (e.g., Intervals.icu Authorized Apps)[cite: 7].</li>
+        <li>You may revoke SunSafeRun's access to your connected fitness accounts at any time through your third-party account settings (e.g., Intervals.icu Authorized Apps)[cite: 15].</li>
     </ul>
 
     <h2>5. Security</h2>
-    <p>We implement standard Transport Layer Security (TLS/HTTPS) encryption to protect all data in transit between your web browser, our servers, and integrated third-party APIs[cite: 7].</p>
+    <p>We implement standard Transport Layer Security (TLS/HTTPS) encryption to protect all data in transit between your web browser, our servers, and integrated third-party APIs[cite: 15].</p>
 
     <h2>6. Changes to This Policy</h2>
     <p>We may update this Privacy Policy periodically to reflect changes in platform features or legal compliance standards. Any updates will be published directly on this page with an updated effective date.</p>

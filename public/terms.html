@@ -7,6 +7,7 @@
     <style>
         :root {
             --primary: #007CC3;
+            --primary-hover: #005FA3;
             --text-main: #1f2937;
             --text-muted: #4b5563;
             --bg-card: #ffffff;
@@ -31,6 +32,32 @@
             border-radius: 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border: 1px solid var(--border);
+        }
+
+        .back-nav {
+            margin-bottom: 24px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary);
+            text-decoration: none;
+            background-color: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-back:hover {
+            background-color: #e0f2fe;
+            color: var(--primary-hover);
+            border-color: #7dd3fc;
+            text-decoration: none;
         }
 
         h1 {
@@ -86,6 +113,10 @@
 <body>
 
 <div class="container">
+    <div class="back-nav">
+        <a href="/" class="btn-back">← Back to Home</a>
+    </div>
+
     <h1>Terms & Conditions</h1>
     <div class="date">Effective Date: October 16, 2026</div>
 
