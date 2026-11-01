@@ -3,5 +3,11 @@
     "api/intervals/webhook.js": {
       "maxDuration": 60
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/sync-tracks",
+      "schedule": "0 1 * * *"
+    }
+  ]
 }
