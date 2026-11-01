@@ -19,6 +19,7 @@ import { fetchRunnerPOIs } from './services/poiService';
 import { POI_CATEGORIES } from './constants/poiCategories';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+import { LCSDTrackCard } from './components/LCSDTrackCard';
 
 const MIN_HOUR = 5;
 const MAX_HOUR = 20;
@@ -38,6 +39,7 @@ export default function App() {
   const [sheetSnap, setSheetSnap] = useState('collapsed');
   const [isConnected, setIsConnected] = useState(false);
   const { theme, isDaytime, toggleTheme } = useTheme();
+  const [showTrackCard, setShowTrackCard] = useState(false);
 
   // POI state using imported constants
   const [poiList, setPoiList] = useState([]);
@@ -55,9 +57,6 @@ export default function App() {
     setPoiList(pois);
   }, []);
 
-  // ── FIX 1: Updated to recognize the new 'hidden' snap ────────────────────
-  // The sheet is only considered "open" when it's at half or full. Collapsed,
-  // hidden, and the legacy 'peek' value are all treated as "not open".
   const isBottomDetailsOpen = sheetSnap === 'half' || sheetSnap === 'full';
 
   useEffect(() => {
@@ -238,9 +237,6 @@ export default function App() {
                 flyTarget={flyTarget}
                 isCollapsed={isBottomDetailsOpen}
             >
-              {/* ── FIX 2: keyed POILayer forces a clean remount when the
-                  active category set changes. This prevents react-leaflet
-                  from leaving stale markers on the map when filters toggle. */}
               <POILayer
                   key={activeCategories.join(',')}
                   poiList={poiList}
@@ -257,8 +253,8 @@ export default function App() {
                 <RouteControls pointCount={routePoints.length} onUndo={handleUndo} onClear={handleClear} />
               </div>
 
-              {/* Water & Toilets Toggle Pills */}
-              <div className="pointer-events-auto flex gap-2">
+              {/* Water, Toilets & Track Filter Toggle Pills */}
+              <div className="pointer-events-auto flex flex-wrap gap-2">
                 <button
                     type="button"
                     onClick={() => toggleCategory(POI_CATEGORIES.WATER.id)}
@@ -281,7 +277,25 @@ export default function App() {
                 >
                   {POI_CATEGORIES.RESTROOM.icon} {POI_CATEGORIES.RESTROOM.label}
                 </button>
+                <button
+                    type="button"
+                    onClick={() => setShowTrackCard((prev) => !prev)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-md border transition-all ${
+                        showTrackCard
+                            ? 'bg-amber text-ink border-amber shadow-amber/20'
+                            : 'bg-surface text-paper border-line hover:bg-surface/80'
+                    }`}
+                >
+                  🏟️ Track Schedule
+                </button>
               </div>
+
+              {/* Render LCSD Track Card when toggled */}
+              {showTrackCard && (
+                  <div className="pointer-events-auto max-w-sm mt-1">
+                    <LCSDTrackCard />
+                  </div>
+              )}
 
               {rainLevel !== 'clear' && (
                   <div className="flex justify-center">
