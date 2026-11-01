@@ -3,14 +3,13 @@ import { useState, useEffect } from 'react';
 import { LCSD_TRACKS } from '../constants/lcsdTracks';
 
 export function LCSDTrackCard() {
-    const [selectedTrack, setSelectedTrack] = useState('causeway_bay');
+    const [selectedTrack, setSelectedTrack] = useState('kowloon_tsai');
     const [dayOffset, setDayOffset] = useState('today'); // 'today' | 'tomorrow'
     const [schedule, setSchedule] = useState(null);
     const [loading, setLoading] = useState(false);
 
     const districts = ['HK Island', 'Kowloon', 'New Territories'];
 
-    // Compute ISO YYYY-MM-DD
     const getTargetDate = (offset) => {
         const d = new Date();
         if (offset === 'tomorrow') d.setDate(d.getDate() + 1);
@@ -21,22 +20,16 @@ export function LCSDTrackCard() {
 
     useEffect(() => {
         setLoading(true);
-
-        // Calls your Vercel serverless API route (/api/tracks.js)
         fetch(`/api/tracks?venueId=${selectedTrack}&date=${targetDateStr}`)
             .then((res) => {
-                if (!res.ok) {
-                    throw new Error('Schedule not found in database');
-                }
+                if (!res.ok) throw new Error('Schedule not found');
                 return res.json();
             })
             .then((data) => {
                 setSchedule(data);
                 setLoading(false);
             })
-            .catch((err) => {
-                console.warn('API notice:', err.message);
-                // If data isn't in KV yet, show null (or a clean empty state) instead of fake mock data
+            .catch(() => {
                 setSchedule(null);
                 setLoading(false);
             });
@@ -44,7 +37,7 @@ export function LCSDTrackCard() {
 
     return (
         <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-slate-800 dark:text-slate-100 shadow-xl max-w-sm">
-            {/* Card Header & Day Toggle */}
+            {/* Header & Day Toggle */}
             <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
           🏟️ LCSD Track Availability
@@ -95,13 +88,13 @@ export function LCSDTrackCard() {
                 </select>
             </div>
 
-            {/* Timetable Session Slots */}
+            {/* 30-Minute Granular Timetable Slots with Scrollbar */}
             {loading ? (
                 <div className="text-center py-6 text-xs text-slate-400 animate-pulse">
-                    Loading track timetable...
+                    Loading 30-min timetable...
                 </div>
             ) : schedule && schedule.slots ? (
-                <div className="space-y-1.5">
+                <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1 thin-scroll">
                     {schedule.slots.map((slot, index) => (
                         <div
                             key={index}
@@ -111,13 +104,19 @@ export function LCSDTrackCard() {
                 {slot.time}
               </span>
 
-                            {/* Minimalist Icon-Only Badges */}
-                            {slot.isOpen ? (
-                                <span className="px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                            {/* Tri-State Badges: Green (Open), Yellow (Partial/Outer Lanes - L), Red (Closed) */}
+                            {slot.status === 'open' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30" title="Full Track Available">
                   🟢
                 </span>
-                            ) : (
-                                <span className="px-2.5 py-0.5 rounded-full text-xs bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                            )}
+                            {slot.status === 'partial' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="Partial Access / Outer Lanes Only (L)">
+                  🟡
+                </span>
+                            )}
+                            {slot.status === 'closed' && (
+                                <span className="px-2.5 py-0.5 rounded-full text-xs bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30" title="Closed">
                   🔴
                 </span>
                             )}
@@ -126,7 +125,7 @@ export function LCSDTrackCard() {
                 </div>
             ) : (
                 <div className="text-center py-6 text-xs text-slate-400">
-                    No schedule synced in database for this date yet.
+                    No 30-min schedule synced in database for this date yet.
                 </div>
             )}
         </div>

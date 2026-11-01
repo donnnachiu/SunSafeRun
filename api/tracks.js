@@ -10,14 +10,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing venueId or date parameters' });
     }
 
-    // Key format matching your records: track:causeway_bay:2026-11-01
+    // Consistent key pattern for all venues and dates
     const storageKey = `track:${venueId}:${date}`;
 
     try {
         const schedule = await redis.get(storageKey);
 
         if (!schedule) {
-            return res.status(404).json({ error: 'Schedule not found in database' });
+            // Return 404 if this specific track and date haven't been seeded/synced yet
+            return res.status(404).json({ error: 'Schedule not found in database for this venue/date' });
         }
 
         return res.status(200).json(typeof schedule === 'string' ? JSON.parse(schedule) : schedule);
